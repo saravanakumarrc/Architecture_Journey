@@ -1,0 +1,1 @@
+What are Software architecture patterns? give detailed explaination with examples for each one in a new markdown file and link it to the #file:key_skills_of_an_architect.md accordingly.
