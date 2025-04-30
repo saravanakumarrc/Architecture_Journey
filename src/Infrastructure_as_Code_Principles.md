@@ -1,4 +1,4 @@
-# Infrastructure as Code (IaC) Principles
+# Infrastructure as Code Principles
 
 ```mermaid
 mindmap
@@ -6,299 +6,321 @@ mindmap
         as Code))
         (Core Principles)
             [Idempotency]
+            [Immutability]
             [Version Control]
             [Modularity]
+        (Practices)
+            [Automation]
             [Testing]
+            [Documentation]
+            [CI/CD]
         (Tools)
             [Terraform]
-            [ARM/Bicep]
             [CloudFormation]
+            [Ansible]
             [Pulumi]
-        (Practices)
-            [Immutability]
-            [Automation]
-            [Documentation]
-            [Security]
+        (Benefits)
+            [Consistency]
+            [Scalability]
+            [Reliability]
+            [Compliance]
 ```
 
-## Core IaC Principles
+## Core Implementation Patterns
 
-### 1. Infrastructure Definition
+### 1. Resource Definition Pattern
 
 ```mermaid
 graph TB
-    subgraph "IaC Components"
-        direction TB
+    subgraph "IaC Framework"
+        D[Definition] --> V[Validation]
+        V --> P[Planning]
+        P --> A[Application]
+        A --> M[Monitoring]
         
-        subgraph "Resource Definitions"
-            R1[Network]
-            R2[Compute]
-            R3[Storage]
-            R4[Security]
+        subgraph "States"
+            C[Current]
+            D[Desired]
+            T[Transition]
         end
-        
-        subgraph "State Management"
-            S1[State Files]
-            S2[Locking]
-            S3[Backend Storage]
-        end
-        
-        subgraph "Deployment"
-            D1[Plan]
-            D2[Apply]
-            D3[Destroy]
-        end
-        
-        R1 & R2 & R3 & R4 --> S1
-        S1 --> D1
-        D1 --> D2
     end
 ```
 
-### 2. Declarative Syntax
-```hcl
-# Terraform Example
-resource "azurerm_resource_group" "example" {
-  name     = "production-resources"
-  location = "East US"
-
-  tags = {
-    environment = "production"
-    department  = "engineering"
-  }
-}
-
-resource "azurerm_virtual_network" "example" {
-  name                = "production-network"
-  resource_group_name = azurerm_resource_group.example.name
-  location            = azurerm_resource_group.example.location
-  address_space       = ["10.0.0.0/16"]
-
-  subnet {
-    name           = "internal"
-    address_prefix = "10.0.1.0/24"
-  }
-}
-```
-
-## Infrastructure Modularity
-
-### 1. Module Structure
-
-```mermaid
-graph TB
-    subgraph "Module Organization"
-        direction TB
-        
-        Root[Root Module] --> M1[Network Module]
-        Root --> M2[Compute Module]
-        Root --> M3[Database Module]
-        
-        M1 --> S1[Subnets]
-        M1 --> S2[Security Groups]
-        
-        M2 --> VM1[VM Scale Set]
-        M2 --> VM2[Load Balancer]
-        
-        M3 --> DB1[Primary]
-        M3 --> DB2[Replica]
-    end
-```
-
-### 2. Module Example
-```hcl
-# modules/webapp/main.tf
-module "app_service" {
-  source              = "./modules/webapp"
-  name                = "production-webapp"
-  resource_group_name = module.resource_group.name
-  location            = module.resource_group.location
-
-  app_settings = {
-    "WEBSITE_RUN_FROM_PACKAGE" = "1"
-    "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "false"
-  }
-
-  connection_strings = [
-    {
-      name  = "Database"
-      type  = "SQLServer"
-      value = "Server=server;Database=db;User Id=user;Password=pass;"
-    }
-  ]
-}
-```
-
-## State Management
-
-### 1. Remote State Pattern
-```hcl
-# Backend Configuration
-terraform {
-  backend "azurerm" {
-    resource_group_name  = "tfstate"
-    storage_account_name = "tfstate"
-    container_name      = "tfstate"
-    key                 = "prod.terraform.tfstate"
-  }
-}
-```
-
-### 2. State Flow
-
-```mermaid
-sequenceDiagram
-    participant Dev as Developer
-    participant VC as Version Control
-    participant CI as CI/CD Pipeline
-    participant State as State Storage
-    participant Cloud as Cloud Provider
-    
-    Dev->>VC: Push IaC Code
-    VC->>CI: Trigger Pipeline
-    CI->>State: Lock State
-    CI->>State: Read Current State
-    CI->>Cloud: Apply Changes
-    Cloud-->>State: Update State
-    State-->>CI: Release Lock
-    CI-->>Dev: Deployment Complete
-```
-
-## Testing Strategies
-
-### 1. Test Levels
-
-```mermaid
-graph TB
-    subgraph "IaC Testing"
-        direction TB
-        
-        L1[Syntax Validation] --> L2[Unit Tests]
-        L2 --> L3[Integration Tests]
-        L3 --> L4[Security Tests]
-        L4 --> L5[Compliance Tests]
-    end
-```
-
-### 2. Test Implementation
+Implementation Example:
 ```typescript
-// Infrastructure Test Example
-describe('Virtual Network Configuration', () => {
-    it('should have the correct address space', () => {
-        const vnet = plan.getResourceById('azurerm_virtual_network.example');
-        expect(vnet.address_space).toContain('10.0.0.0/16');
-    });
+// Infrastructure resource manager
+class InfrastructureManager {
+    constructor(
+        private resourceProvider: ResourceProvider,
+        private stateManager: StateManager,
+        private validator: ResourceValidator,
+        private planner: ExecutionPlanner
+    ) {}
 
-    it('should have required subnets', () => {
-        const subnets = plan.getResourcesByType('azurerm_subnet');
-        expect(subnets).toHaveLength(3);
-        expect(subnets[0].name).toBe('frontend');
-        expect(subnets[1].name).toBe('backend');
-        expect(subnets[2].name).toBe('database');
-    });
-});
+    async deployInfrastructure(
+        definition: InfraDefinition
+    ): Promise<DeploymentResult> {
+        try {
+            // Validate definition
+            await this.validator.validateDefinition(
+                definition
+            );
+
+            // Get current state
+            const currentState = await this.stateManager
+                .getCurrentState();
+
+            // Plan changes
+            const plan = await this.planner.createPlan(
+                currentState,
+                definition
+            );
+
+            // Execute plan
+            const result = await this.executeDeployment(plan);
+
+            // Update state
+            await this.stateManager.updateState(result);
+
+            return result;
+        } catch (error) {
+            await this.handleDeploymentError(error);
+            throw error;
+        }
+    }
+
+    private async executeDeployment(
+        plan: ExecutionPlan
+    ): Promise<DeploymentResult> {
+        const operations = plan.getOperations();
+        const results: OperationResult[] = [];
+
+        for (const op of operations) {
+            try {
+                // Execute operation
+                const result = await this.executeOperation(op);
+                results.push(result);
+
+                // Validate result
+                await this.validateOperationResult(result);
+
+                // Update dependencies
+                await this.updateDependencies(result);
+            } catch (error) {
+                return this.handleOperationError(
+                    error,
+                    op,
+                    results
+                );
+            }
+        }
+
+        return this.createDeploymentResult(results);
+    }
+}
 ```
 
-## Security Best Practices
-
-### 1. Secret Management
-```hcl
-# Using Key Vault for Secrets
-data "azurerm_key_vault_secret" "db_password" {
-  name         = "database-password"
-  key_vault_id = data.azurerm_key_vault.example.id
-}
-
-resource "azurerm_app_service" "example" {
-  # ...existing configuration...
-
-  app_settings = {
-    "DatabasePassword" = data.azurerm_key_vault_secret.db_password.value
-  }
-}
-```
-
-### 2. Security Controls
+### 2. State Management Pattern
 
 ```mermaid
 graph TB
-    subgraph "Security Layers"
-        direction TB
+    subgraph "State Management"
+        L[Local State] --> R[Remote State]
+        R --> S[State Lock]
+        S --> C[Consistency]
         
-        I[Identity & Access] --> N[Network Security]
-        N --> D[Data Protection]
-        D --> M[Monitoring]
-        
-        subgraph "Controls"
-            C1[RBAC]
-            C2[NSGs]
-            C3[Encryption]
-            C4[Auditing]
+        subgraph "Operations"
+            READ[Read]
+            WRITE[Write]
+            LOCK[Lock]
+            UNLOCK[Unlock]
         end
     end
 ```
 
-## Deployment Strategies
+Implementation Example:
+```typescript
+// Infrastructure state manager
+class StateManager {
+    constructor(
+        private storage: StateStorage,
+        private lockManager: LockManager,
+        private consistency: ConsistencyChecker
+    ) {}
 
-### 1. Progressive Deployment
+    async updateState(
+        changes: ResourceChanges
+    ): Promise<void> {
+        const lockId = await this.lockManager.acquireLock();
+
+        try {
+            // Read current state
+            const currentState = await this.storage
+                .readState();
+
+            // Apply changes
+            const newState = await this.applyChanges(
+                currentState,
+                changes
+            );
+
+            // Validate consistency
+            await this.consistency.checkConsistency(
+                newState
+            );
+
+            // Write new state
+            await this.storage.writeState(newState);
+        } finally {
+            await this.lockManager.releaseLock(lockId);
+        }
+    }
+
+    private async applyChanges(
+        current: State,
+        changes: ResourceChanges
+    ): Promise<State> {
+        const newState = current.clone();
+
+        for (const change of changes) {
+            switch (change.type) {
+                case 'CREATE':
+                    await this.handleCreate(newState, change);
+                    break;
+                case 'UPDATE':
+                    await this.handleUpdate(newState, change);
+                    break;
+                case 'DELETE':
+                    await this.handleDelete(newState, change);
+                    break;
+            }
+        }
+
+        return newState;
+    }
+}
+```
+
+### 3. Testing and Validation Pattern
 
 ```mermaid
-graph LR
-    subgraph "Deployment Flow"
-        direction LR
-        
-        Dev[Development] --> Test[Testing]
-        Test --> Stage[Staging]
-        Stage --> Prod[Production]
+graph TB
+    subgraph "Testing Framework"
+        U[Unit Tests] --> I[Integration]
+        I --> C[Compliance]
+        C --> S[Security]
         
         subgraph "Validation"
-            V1[Automated Tests]
-            V2[Security Scans]
-            V3[Performance Tests]
+            SYNTAX[Syntax]
+            POLICY[Policy]
+            COST[Cost]
+            SECURITY[Security]
         end
     end
 ```
 
-### 2. Rollback Strategy
-```hcl
-# Version Tagging
-resource "azurerm_app_service" "example" {
-  name                = "production-app"
-  location            = azurerm_resource_group.example.location
-  resource_group_name = azurerm_resource_group.example.name
+Implementation Example:
+```typescript
+// Infrastructure test manager
+class InfrastructureTestManager {
+    constructor(
+        private testRunner: TestRunner,
+        private policyChecker: PolicyChecker,
+        private securityScanner: SecurityScanner,
+        private costEstimator: CostEstimator
+    ) {}
 
-  tags = {
-    version     = "1.2.0"
-    deployment  = "20250430"
-    rollback_to = "1.1.0"
-  }
+    async validateInfrastructure(
+        definition: InfraDefinition
+    ): Promise<ValidationResult> {
+        // Run syntax validation
+        await this.validateSyntax(definition);
+
+        // Run unit tests
+        const unitResults = await this.runUnitTests(
+            definition
+        );
+
+        // Check policies
+        const policyResults = await this.checkPolicies(
+            definition
+        );
+
+        // Scan security
+        const securityResults = await this.scanSecurity(
+            definition
+        );
+
+        // Estimate costs
+        const costEstimate = await this.estimateCosts(
+            definition
+        );
+
+        return {
+            syntax: true,
+            unitTests: unitResults,
+            policyChecks: policyResults,
+            security: securityResults,
+            costs: costEstimate
+        };
+    }
+
+    private async runUnitTests(
+        definition: InfraDefinition
+    ): Promise<TestResult[]> {
+        const tests = await this.testRunner.discoverTests(
+            definition
+        );
+
+        return Promise.all(
+            tests.map(test =>
+                this.testRunner.runTest(test, definition)
+            )
+        );
+    }
+
+    async validateDeployment(
+        deployment: Deployment
+    ): Promise<void> {
+        // Validate resources
+        await this.validateResources(deployment);
+
+        // Check dependencies
+        await this.checkDependencies(deployment);
+
+        // Verify configurations
+        await this.verifyConfigurations(deployment);
+
+        // Validate compliance
+        await this.validateCompliance(deployment);
+    }
 }
 ```
 
 ## Best Practices
 
-1. **Version Control**
-   - Use Git for IaC code
-   - Implement branch protection
-   - Review changes through PRs
-   - Tag releases properly
+1. **Code Management**
+   - Use version control
+   - Implement branching strategy
+   - Review changes
+   - Track history
 
-2. **Documentation**
-   - Document variables
-   - Explain module usage
-   - Maintain README files
-   - Include examples
+2. **Testing Strategy**
+   - Unit test modules
+   - Integration test stacks
+   - Test in stages
+   - Validate compliance
 
-3. **State Management**
-   - Use remote state
-   - Enable state locking
-   - Implement state backup
-   - Separate state per environment
-
-4. **Security**
+3. **Security & Compliance**
    - Encrypt sensitive data
    - Use least privilege
-   - Implement compliance checks
-   - Regular security audits
+   - Implement audit trails
+   - Regular security scans
 
-Remember: Infrastructure as Code is about treating infrastructure with the same rigor as application code. Always follow software engineering best practices when working with IaC.
+4. **Operational Excellence**
+   - Document everything
+   - Automate deployment
+   - Monitor changes
+   - Regular maintenance
+
+Remember: Infrastructure as Code transforms infrastructure management into a software engineering discipline. Apply software development best practices while considering infrastructure-specific requirements and constraints.
