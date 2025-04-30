@@ -14,205 +14,366 @@ mindmap
             [ABAC]
             [PBAC]
             [ACL]
-        (Identity)
+        (Protocols)
             [SSO]
             [MFA]
             [Federation]
-        (Protocols)
-            [Basic Auth]
-            [Token-based]
-            [Certificate]
+            [LDAP]
+        (Security)
+            [Encryption]
+            [Key Management]
+            [Session]
+            [Token]
 ```
 
-## Common Authentication Frameworks
+## Authentication Frameworks
 
-### 1. OAuth 2.0
-- Industry standard for authorization
-- Provides delegated access
-- Multiple grant types
-- Token-based security
+### 1. OAuth 2.0 + OpenID Connect
 
 ```mermaid
-sequenceDiagram
-    participant User
-    participant Client
-    participant AuthServer
-    participant Resource
-
-    User->>Client: Access Request
-    Client->>AuthServer: Authorization Request
-    AuthServer->>User: Authentication Prompt
-    User->>AuthServer: Credentials
-    AuthServer->>Client: Authorization Code
-    Client->>AuthServer: Code + Client Credentials
-    AuthServer->>Client: Access Token
-    Client->>Resource: Request + Token
-    Resource->>Client: Protected Resource
+graph TB
+    subgraph "OAuth 2.0 Flow"
+        C[Client] --> |1. Auth Request| AS[Auth Server]
+        AS --> |2. Auth Code| C
+        C --> |3. Token Request| AS
+        AS --> |4. Access Token| C
+        C --> |5. API Request| RS[Resource Server]
+        
+        subgraph "Token Types"
+            AT[Access Token]
+            RT[Refresh Token]
+            IT[ID Token]
+        end
+    end
 ```
 
-### 2. OpenID Connect
-- Authentication layer on top of OAuth 2.0
-- Provides user identity verification
-- Standard claims about user
-- Single sign-on (SSO) support
+Implementation Example:
+```typescript
+// OAuth2 client implementation
+class OAuth2Client {
+    constructor(
+        private config: OAuth2Config,
+        private storage: TokenStorage,
+        private httpClient: HTTPClient
+    ) {}
 
-### 3. SAML (Security Assertion Markup Language)
-- XML-based standard
-- Enterprise SSO solution
-- Federation capabilities
-- Rich attribute support
+    async authenticate(): Promise<TokenSet> {
+        // Generate PKCE challenge
+        const codeVerifier = this.generateCodeVerifier();
+        const codeChallenge = await this.generateCodeChallenge(
+            codeVerifier
+        );
 
-## Authorization Models
+        // Build authorization URL
+        const authUrl = this.buildAuthorizationUrl({
+            client_id: this.config.clientId,
+            redirect_uri: this.config.redirectUri,
+            response_type: 'code',
+            scope: this.config.scope,
+            code_challenge: codeChallenge,
+            code_challenge_method: 'S256',
+            state: this.generateState()
+        });
 
-### 1. Role-Based Access Control (RBAC)
+        // Handle authorization response
+        const authCode = await this.handleAuthorizationResponse();
+
+        // Exchange code for tokens
+        const tokens = await this.exchangeCode(
+            authCode,
+            codeVerifier
+        );
+
+        // Store tokens securely
+        await this.storage.storeTokens(tokens);
+
+        return tokens;
+    }
+
+    async refreshTokens(): Promise<TokenSet> {
+        const tokens = await this.storage.getTokens();
+        if (!tokens.refreshToken) {
+            throw new NoRefreshTokenError();
+        }
+
+        const newTokens = await this.exchangeRefreshToken(
+            tokens.refreshToken
+        );
+
+        await this.storage.storeTokens(newTokens);
+        return newTokens;
+    }
+
+    private async exchangeCode(
+        code: string,
+        codeVerifier: string
+    ): Promise<TokenSet> {
+        const response = await this.httpClient.post(
+            this.config.tokenEndpoint,
+            {
+                grant_type: 'authorization_code',
+                code,
+                client_id: this.config.clientId,
+                client_secret: this.config.clientSecret,
+                redirect_uri: this.config.redirectUri,
+                code_verifier: codeVerifier
+            }
+        );
+
+        return this.validateTokenResponse(response);
+    }
+}
+
+// OpenID Connect client
+class OpenIDConnectClient extends OAuth2Client {
+    async authenticateWithOIDC(): Promise<OIDCTokenSet> {
+        const tokens = await super.authenticate();
+        
+        // Validate ID Token
+        if (!tokens.idToken) {
+            throw new MissingIDTokenError();
+        }
+
+        const claims = await this.validateIDToken(tokens.idToken);
+        
+        return {
+            ...tokens,
+            claims
+        };
+    }
+
+    private async validateIDToken(
+        idToken: string
+    ): Promise<IDTokenClaims> {
+        const jwks = await this.fetchJWKS();
+        const decoded = await this.verifyJWT(idToken, jwks);
+        
+        // Validate claims
+        this.validateClaims(decoded);
+        
+        return decoded;
+    }
+}
+```
+
+### 2. Role-Based Access Control (RBAC)
 
 ```mermaid
-graph TD
+graph TB
     subgraph "RBAC Model"
         U[Users] --> R[Roles]
         R --> P[Permissions]
-        P --> RE[Resources]
+        P --> R2[Resources]
+        
+        subgraph "Hierarchies"
+            RH[Role Hierarchy]
+            PH[Permission Hierarchy]
+        end
     end
 ```
 
-### 2. Attribute-Based Access Control (ABAC)
+Implementation Example:
+```typescript
+// RBAC implementation
+class RBACService {
+    constructor(
+        private roleRepository: RoleRepository,
+        private permissionRepository: PermissionRepository,
+        private cache: CacheService
+    ) {}
+
+    async hasPermission(
+        userId: string,
+        permission: Permission,
+        resource: Resource
+    ): Promise<boolean> {
+        // Check cache first
+        const cacheKey = this.buildCacheKey(
+            userId,
+            permission,
+            resource
+        );
+        const cached = await this.cache.get(cacheKey);
+        if (cached !== undefined) {
+            return cached;
+        }
+
+        // Get user roles
+        const roles = await this.roleRepository
+            .getRolesForUser(userId);
+
+        // Check permissions including role hierarchy
+        const hasPermission = await this.checkRolePermissions(
+            roles,
+            permission,
+            resource
+        );
+
+        // Cache result
+        await this.cache.set(
+            cacheKey,
+            hasPermission,
+            this.cache.TTL.PERMISSIONS
+        );
+
+        return hasPermission;
+    }
+
+    async grantRole(
+        userId: string,
+        roleId: string
+    ): Promise<void> {
+        await this.roleRepository.assignRole(userId, roleId);
+        await this.invalidateUserPermissionCache(userId);
+    }
+
+    async revokeRole(
+        userId: string,
+        roleId: string
+    ): Promise<void> {
+        await this.roleRepository.removeRole(userId, roleId);
+        await this.invalidateUserPermissionCache(userId);
+    }
+
+    private async checkRolePermissions(
+        roles: Role[],
+        permission: Permission,
+        resource: Resource
+    ): Promise<boolean> {
+        // Include inherited roles
+        const allRoles = await this.getAllInheritedRoles(roles);
+        
+        // Check permissions
+        for (const role of allRoles) {
+            if (await this.roleHasPermission(
+                role,
+                permission,
+                resource
+            )) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+```
+
+### 3. Policy-Based Access Control (PBAC)
 
 ```mermaid
-graph TD
-    subgraph "ABAC Model"
-        U[User Attributes] --> D[Decision]
-        R[Resource Attributes] --> D
-        E[Environment Attributes] --> D
-        A[Action Attributes] --> D
-        D --> P[Permission]
+graph TB
+    subgraph "PBAC Architecture"
+        P[Policy] --> E[Evaluation]
+        E --> D[Decision]
+        
+        subgraph "Components"
+            PEP[Policy Enforcement Point]
+            PDP[Policy Decision Point]
+            PIP[Policy Information Point]
+        end
     end
 ```
 
-## Implementation Patterns
-
-### 1. Token-Based Authentication
+Implementation Example:
 ```typescript
-interface TokenService {
-    generateToken(user: User): string;
-    verifyToken(token: string): boolean;
-    refreshToken(token: string): string;
-}
+// PBAC implementation
+class PolicyService {
+    constructor(
+        private policyRepository: PolicyRepository,
+        private policyEvaluator: PolicyEvaluator,
+        private contextProvider: ContextProvider
+    ) {}
 
-class JWTService implements TokenService {
-    private readonly secret: string;
+    async evaluateAccess(
+        subject: Subject,
+        action: Action,
+        resource: Resource
+    ): Promise<Decision> {
+        // Get applicable policies
+        const policies = await this.policyRepository
+            .getPoliciesFor(resource.type);
 
-    constructor(secret: string) {
-        this.secret = secret;
+        // Get evaluation context
+        const context = await this.contextProvider
+            .getContext(subject, resource);
+
+        // Evaluate all applicable policies
+        const decisions = await Promise.all(
+            policies.map(policy =>
+                this.evaluatePolicy(policy, {
+                    subject,
+                    action,
+                    resource,
+                    context
+                })
+            )
+        );
+
+        // Combine decisions according to combination algorithm
+        return this.combineDecisions(decisions);
     }
 
-    generateToken(user: User): string {
-        return jwt.sign({ userId: user.id, roles: user.roles }, this.secret, {
-            expiresIn: '1h'
-        });
-    }
-}
-```
+    private async evaluatePolicy(
+        policy: Policy,
+        data: EvaluationData
+    ): Promise<Decision> {
+        try {
+            // Evaluate conditions
+            const conditions = await Promise.all(
+                policy.conditions.map(condition =>
+                    this.policyEvaluator.evaluateCondition(
+                        condition,
+                        data
+                    )
+                )
+            );
 
-### 2. Authorization Middleware
-```typescript
-class AuthorizationMiddleware {
-    constructor(private rbacService: RBACService) {}
+            // Check if all conditions are met
+            const allow = conditions.every(result => result);
 
-    async checkPermission(user: User, resource: string, action: string): Promise<boolean> {
-        const roles = user.roles;
-        return await this.rbacService.hasPermission(roles, resource, action);
+            return {
+                effect: allow ? 'ALLOW' : 'DENY',
+                policy: policy.id,
+                reason: allow ? 
+                    'All conditions satisfied' : 
+                    'Conditions not met'
+            };
+        } catch (error) {
+            return {
+                effect: 'DENY',
+                policy: policy.id,
+                reason: 'Error evaluating policy'
+            };
+        }
     }
 }
 ```
 
 ## Security Best Practices
 
-1. **Token Security**
-   - Use secure token storage
-   - Implement token expiration
-   - Rotate refresh tokens
-   - Validate token signatures
+1. **Authentication**
+   - Implement MFA
+   - Use secure protocols
+   - Handle sessions securely
+   - Protect credentials
 
-2. **Authentication Best Practices**
-   - Implement MFA where possible
-   - Use strong password policies
-   - Rate limit authentication attempts
-   - Secure session management
+2. **Authorization**
+   - Follow least privilege
+   - Implement role hierarchy
+   - Use fine-grained permissions
+   - Audit access
 
-3. **Authorization Guidelines**
-   - Follow principle of least privilege
-   - Regular permission audits
-   - Fine-grained access control
-   - Role hierarchy management
+3. **Token Management**
+   - Secure token storage
+   - Handle token expiration
+   - Implement refresh flows
+   - Revoke compromised tokens
 
-4. **General Security**
-   - Use HTTPS everywhere
-   - Secure cookie configuration
-   - CSRF protection
-   - XSS prevention
+4. **Security Controls**
+   - Rate limiting
+   - Input validation
+   - Audit logging
+   - Error handling
 
-## Common Implementation Scenarios
-
-### 1. API Security
-```mermaid
-sequenceDiagram
-    participant Client
-    participant API Gateway
-    participant Auth Service
-    participant Resource Service
-
-    Client->>API Gateway: Request + Token
-    API Gateway->>Auth Service: Validate Token
-    Auth Service->>API Gateway: Token Valid
-    API Gateway->>Resource Service: Authorized Request
-    Resource Service->>API Gateway: Response
-    API Gateway->>Client: Protected Resource
-```
-
-### 2. Single Sign-On
-```mermaid
-sequenceDiagram
-    participant User
-    participant App1
-    participant IdP
-    participant App2
-
-    User->>App1: Access Request
-    App1->>IdP: Redirect to SSO
-    IdP->>User: Login Form
-    User->>IdP: Credentials
-    IdP->>App1: Success + Token
-    User->>App2: Access Request
-    App2->>IdP: Verify Session
-    IdP->>App2: Session Valid
-```
-
-## Framework Selection Guide
-
-Consider these factors when choosing an auth framework:
-
-1. **Scale and Complexity**
-   - User base size
-   - Geographic distribution
-   - Integration requirements
-   - Performance needs
-
-2. **Security Requirements**
-   - Compliance needs
-   - Risk profile
-   - Data sensitivity
-   - Audit requirements
-
-3. **Technical Constraints**
-   - Existing infrastructure
-   - Team expertise
-   - Integration points
-   - Performance requirements
-
-4. **Business Needs**
-   - Time to market
-   - Cost considerations
-   - Maintenance overhead
-   - Future scalability
-
-Remember: Authentication and authorization are critical security components. Always follow security best practices and keep frameworks updated to protect against emerging threats.
+Remember: Authentication and authorization are foundational security components. Always follow security best practices and regularly update your security measures to protect against new threats.

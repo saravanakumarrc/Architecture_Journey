@@ -1,351 +1,475 @@
-# Network and Protocol Design Patterns
+# Network and Protocol Design
 
 ```mermaid
 mindmap
-    root((Network
-        Architecture))
-        (Protocols)
-            [HTTP/HTTPS]
-            [WebSocket]
-            [gRPC]
-            [MQTT]
-        (Security)
-            [TLS/SSL]
-            [mTLS]
-            [API Security]
-            [Network Policies]
-        (Patterns)
-            [Load Balancing]
-            [Service Discovery]
-            [API Gateway]
-            [Reverse Proxy]
+    root((Network &
+        Protocol
+        Design))
+        (Protocol Layers)
+            [Application]
+            [Transport]
+            [Network]
+            [Link]
         (Communication)
             [Synchronous]
             [Asynchronous]
             [Streaming]
-            [Pub/Sub]
+            [Batch]
+        (Security)
+            [Encryption]
+            [Authentication]
+            [Authorization]
+            [Integrity]
+        (Performance)
+            [Latency]
+            [Throughput]
+            [Reliability]
+            [Scalability]
 ```
 
-## Protocol Selection Guide
+## Protocol Design Patterns
 
-### 1. HTTP/REST
-Best for:
-- Public APIs
-- CRUD operations
-- Broad client compatibility
-- Caching requirements
+### 1. RESTful Protocol Design
 
-Example Implementation:
+```mermaid
+graph TB
+    subgraph "REST Architecture"
+        C[Client] --> |HTTP| S[Server]
+        
+        subgraph "Key Principles"
+            R[Resource-Based]
+            S[Stateless]
+            U[Uniform Interface]
+            C[Cacheable]
+        end
+        
+        subgraph "Methods"
+            GET
+            POST
+            PUT
+            DELETE
+        end
+    end
+```
+
+Implementation Example:
 ```typescript
-// Express.js REST API with middleware
-import express from 'express';
-import rateLimit from 'express-rate-limit';
-import helmet from 'helmet';
+// RESTful API protocol implementation
+class RESTProtocol {
+    constructor(
+        private httpClient: HTTPClient,
+        private baseUrl: string,
+        private options: ProtocolOptions = {}
+    ) {}
 
-const app = express();
+    async request<T>(
+        method: HTTPMethod,
+        resource: string,
+        options: RequestOptions = {}
+    ): Promise<T> {
+        const url = this.buildUrl(resource);
+        
+        // Add standard headers
+        const headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            ...this.getAuthHeaders(),
+            ...options.headers
+        };
 
-// Security middleware
-app.use(helmet());
+        // Add idempotency key for unsafe methods
+        if (this.isUnsafeMethod(method)) {
+            headers['Idempotency-Key'] = 
+                options.idempotencyKey || uuidv4();
+        }
 
-// Rate limiting
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100 // limit each IP to 100 requests per windowMs
-});
-app.use(limiter);
+        const response = await this.executeWithRetry(() =>
+            this.httpClient.request({
+                method,
+                url,
+                headers,
+                body: options.body ? JSON.stringify(options.body) : undefined,
+                timeout: options.timeout || this.options.defaultTimeout
+            })
+        );
 
-// CORS configuration
-app.use(cors({
-    origin: ['https://trusted-origin.com'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
-// API endpoints
-app.get('/api/resources', async (req, res) => {
-    try {
-        const resources = await fetchResources();
-        res.json(resources);
-    } catch (error) {
-        res.status(500).json({ error: 'Internal server error' });
+        return this.handleResponse<T>(response);
     }
-});
+
+    private async handleResponse<T>(
+        response: HTTPResponse
+    ): Promise<T> {
+        if (!response.ok) {
+            throw this.createError(response);
+        }
+
+        // Handle empty responses
+        if (response.status === 204) {
+            return undefined as T;
+        }
+
+        return response.json();
+    }
+
+    private createError(response: HTTPResponse): Error {
+        const error = new APIError(
+            `HTTP ${response.status}: ${response.statusText}`
+        );
+        error.status = response.status;
+        error.details = response.data;
+        return error;
+    }
+}
 ```
 
-### 2. WebSocket
-Best for:
-- Real-time bidirectional communication
-- Chat applications
-- Live dashboards
-- Gaming
+### 2. gRPC Protocol Design
 
-Example Implementation:
+```mermaid
+graph LR
+    subgraph "gRPC Communication"
+        C[Client] --> |Protocol Buffers| S[Server]
+        
+        subgraph "Patterns"
+            U[Unary]
+            SS[Server Streaming]
+            CS[Client Streaming]
+            BD[Bidirectional]
+        end
+    end
+```
+
+Implementation Example:
 ```typescript
-// WebSocket server with heartbeat
-import { WebSocketServer } from 'ws';
+// gRPC service implementation
+interface OrderService {
+    createOrder(request: CreateOrderRequest): Promise<Order>;
+    streamOrders(request: StreamOrdersRequest): Observable<Order>;
+}
 
-const wss = new WebSocketServer({ port: 8080 });
+class OrderServiceImpl implements OrderService {
+    constructor(
+        private orderRepository: OrderRepository,
+        private validator: OrderValidator
+    ) {}
 
-wss.on('connection', (ws) => {
-    ws.isAlive = true;
+    async createOrder(
+        request: CreateOrderRequest
+    ): Promise<Order> {
+        // Validate request
+        await this.validator.validate(request);
 
-    ws.on('pong', () => {
-        ws.isAlive = true;
-    });
+        // Create order with retry logic
+        const order = await this.executeWithRetry(() =>
+            this.orderRepository.create({
+                customerId: request.customerId,
+                items: request.items,
+                status: 'PENDING'
+            })
+        );
 
-    ws.on('message', (data) => {
-        // Broadcast to all clients
-        wss.clients.forEach((client) => {
-            if (client !== ws && client.readyState === WebSocket.OPEN) {
-                client.send(data);
+        // Emit creation event
+        await this.eventEmitter.emit('order.created', order);
+
+        return order;
+    }
+
+    streamOrders(
+        request: StreamOrdersRequest
+    ): Observable<Order> {
+        return new Observable<Order>(observer => {
+            const query = this.buildQuery(request);
+            const stream = this.orderRepository
+                .watchOrders(query);
+
+            stream.on('data', (order: Order) => {
+                observer.next(order);
+            });
+
+            stream.on('error', (error: Error) => {
+                observer.error(error);
+            });
+
+            stream.on('end', () => {
+                observer.complete();
+            });
+
+            // Cleanup on unsubscribe
+            return () => stream.destroy();
+        });
+    }
+}
+```
+
+### 3. WebSocket Protocol Design
+
+```mermaid
+graph TB
+    subgraph "WebSocket Architecture"
+        C[Client] <--> |WebSocket| S[Server]
+        
+        subgraph "Features"
+            BD[Bidirectional]
+            FD[Full-Duplex]
+            RP[Real-Time]
+        end
+    end
+```
+
+Implementation Example:
+```typescript
+// WebSocket server implementation
+class WebSocketServer {
+    private readonly clients: Map<string, WebSocket>;
+    private readonly heartbeatInterval: number;
+
+    constructor(
+        private readonly server: Server,
+        options: WebSocketOptions = {}
+    ) {
+        this.clients = new Map();
+        this.heartbeatInterval = options.heartbeatInterval || 30000;
+    }
+
+    async start(): Promise<void> {
+        this.server.on('upgrade', (request, socket, head) => {
+            this.handleUpgrade(request, socket, head);
+        });
+
+        // Start heartbeat monitoring
+        setInterval(() => this.checkHeartbeats(), 
+            this.heartbeatInterval);
+    }
+
+    private handleUpgrade(
+        request: Request,
+        socket: Socket,
+        head: Buffer
+    ): void {
+        this.authenticateRequest(request)
+            .then(clientId => {
+                const ws = new WebSocket(request, socket, head);
+                this.setupWebSocket(clientId, ws);
+            })
+            .catch(error => {
+                socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+                socket.destroy();
+            });
+    }
+
+    private setupWebSocket(
+        clientId: string,
+        ws: WebSocket
+    ): void {
+        this.clients.set(clientId, ws);
+
+        ws.on('message', async (data: WebSocket.Data) => {
+            try {
+                const message = JSON.parse(data.toString());
+                await this.handleMessage(clientId, message);
+            } catch (error) {
+                this.handleError(ws, error);
             }
         });
-    });
-});
 
-// Implement heartbeat
-const interval = setInterval(() => {
-    wss.clients.forEach((ws) => {
-        if (ws.isAlive === false) return ws.terminate();
+        ws.on('close', () => {
+            this.clients.delete(clientId);
+        });
+
+        // Set up ping/pong
+        ws.on('pong', () => {
+            ws.isAlive = true;
+        });
+    }
+
+    private async handleMessage(
+        clientId: string,
+        message: WebSocketMessage
+    ): Promise<void> {
+        switch (message.type) {
+            case 'subscribe':
+                await this.handleSubscribe(clientId, message);
+                break;
+            case 'publish':
+                await this.handlePublish(clientId, message);
+                break;
+            default:
+                throw new UnknownMessageTypeError(message.type);
+        }
+    }
+}
+```
+
+## Network Design Patterns
+
+### 1. Load Balancing
+
+```mermaid
+graph TB
+    subgraph "Load Balancing"
+        LB[Load Balancer]
+        LB --> S1[Server 1]
+        LB --> S2[Server 2]
+        LB --> S3[Server 3]
         
-        ws.isAlive = false;
-        ws.ping();
-    });
-}, 30000);
+        subgraph "Algorithms"
+            RR[Round Robin]
+            LC[Least Connections]
+            IP[IP Hash]
+        end
+    end
 ```
 
-### 3. gRPC
-Best for:
-- Microservices communication
-- High-performance requirements
-- Strong typing needs
-- Streaming data
+Implementation Example:
+```typescript
+// Load balancer implementation
+class LoadBalancer {
+    private readonly servers: Server[];
+    private readonly healthChecks: Map<string, HealthCheck>;
+    private strategy: BalancingStrategy;
 
-Example Implementation:
-```protobuf
-// user.proto
-syntax = "proto3";
+    constructor(
+        servers: Server[],
+        strategy: BalancingStrategy = new RoundRobinStrategy()
+    ) {
+        this.servers = servers;
+        this.strategy = strategy;
+        this.healthChecks = new Map();
+        
+        this.setupHealthChecks();
+    }
 
-service UserService {
-    rpc GetUser (UserRequest) returns (UserResponse) {}
-    rpc StreamUpdates (UserRequest) returns (stream UserUpdate) {}
-}
+    async handleRequest(
+        request: Request
+    ): Promise<Response> {
+        // Get available servers
+        const availableServers = this.servers.filter(
+            server => this.isHealthy(server)
+        );
 
-message UserRequest {
-    string user_id = 1;
-}
+        if (availableServers.length === 0) {
+            throw new NoAvailableServersError();
+        }
 
-message UserResponse {
-    string user_id = 1;
-    string name = 2;
-    string email = 3;
-}
+        // Select server using strategy
+        const server = this.strategy.selectServer(
+            availableServers,
+            request
+        );
 
-message UserUpdate {
-    string user_id = 1;
-    string field_name = 2;
-    string new_value = 3;
+        try {
+            return await server.handleRequest(request);
+        } catch (error) {
+            // Mark server as potentially unhealthy
+            await this.checkServerHealth(server);
+            throw error;
+        }
+    }
+
+    private async checkServerHealth(
+        server: Server
+    ): Promise<boolean> {
+        const healthCheck = this.healthChecks.get(server.id);
+        return healthCheck ? await healthCheck.check() : false;
+    }
 }
 ```
 
-## Network Patterns
-
-### 1. Service Discovery Pattern
+### 2. Service Discovery
 
 ```mermaid
 graph TB
     subgraph "Service Discovery"
-        C[Client] --> R[Registry]
-        R --> S1[Service 1]
-        R --> S2[Service 2]
-        R --> S3[Service 3]
+        R[Registry]
+        S1[Service 1] --> R
+        S2[Service 2] --> R
+        C[Client] --> R
         
-        subgraph "Health Checks"
-            HC[Health Checker]
-            HC --> S1
-            HC --> S2
-            HC --> S3
+        subgraph "Patterns"
+            CS[Client-Side]
+            SS[Server-Side]
         end
     end
 ```
 
-Implementation Example (using Consul):
+Implementation Example:
 ```typescript
-// Service registration
-const consul = new Consul();
+// Service discovery implementation
+class ServiceRegistry {
+    private services: Map<string, ServiceInstance[]>;
+    private readonly ttl: number;
 
-const serviceId = 'service-1';
-await consul.agent.service.register({
-    id: serviceId,
-    name: 'my-service',
-    address: '127.0.0.1',
-    port: 3000,
-    check: {
-        http: 'http://localhost:3000/health',
-        interval: '10s'
+    constructor(options: RegistryOptions = {}) {
+        this.services = new Map();
+        this.ttl = options.ttl || 30000;
     }
-});
 
-// Service discovery
-const services = await consul.catalog.service.nodes('my-service');
-const serviceUrls = services.map(service => 
-    `http://${service.ServiceAddress}:${service.ServicePort}`
-);
-```
+    async register(
+        service: ServiceInstance
+    ): Promise<void> {
+        const instances = this.services.get(service.name) || [];
+        instances.push({
+            ...service,
+            lastHeartbeat: Date.now()
+        });
 
-### 2. API Gateway Pattern
+        this.services.set(service.name, instances);
+    }
 
-```mermaid
-graph TB
-    subgraph "API Gateway"
-        C[Clients] --> AG[API Gateway]
-        
-        AG --> |Authentication| Auth[Auth Service]
-        AG --> |Rate Limiting| RL[Rate Limiter]
-        AG --> |Transform| T[Transformer]
-        
-        subgraph "Backend Services"
-            AG --> S1[Service 1]
-            AG --> S2[Service 2]
-            AG --> S3[Service 3]
-        end
-    end
-```
+    async discover(
+        serviceName: string
+    ): Promise<ServiceInstance[]> {
+        const instances = this.services.get(serviceName) || [];
+        return instances.filter(instance => 
+            this.isInstanceHealthy(instance)
+        );
+    }
 
-Implementation Example (using Node.js):
-```typescript
-// API Gateway with routing and middleware
-import express from 'express';
-import proxy from 'express-http-proxy';
-import jwt from 'express-jwt';
-
-const app = express();
-
-// Authentication middleware
-const authenticate = jwt({
-    secret: process.env.JWT_SECRET,
-    algorithms: ['HS256']
-});
-
-// Rate limiting per service
-const createServiceLimiter = (windowMs: number, max: number) => 
-    rateLimit({ windowMs, max });
-
-// Service routes with different policies
-app.use('/users', 
-    authenticate,
-    createServiceLimiter(15 * 60 * 1000, 100),
-    proxy('http://user-service:3001')
-);
-
-app.use('/orders',
-    authenticate,
-    createServiceLimiter(15 * 60 * 1000, 50),
-    proxy('http://order-service:3002')
-);
-
-// Circuit breaker for services
-const circuitBreaker = new CircuitBreaker({
-    failureThreshold: 5,
-    resetTimeout: 60000
-});
-
-app.use('/payments',
-    authenticate,
-    async (req, res, next) => {
-        try {
-            await circuitBreaker.execute(() => 
-                proxy('http://payment-service:3003')(req, res, next)
+    async deregister(
+        serviceId: string
+    ): Promise<void> {
+        for (const [name, instances] of this.services) {
+            const filtered = instances.filter(
+                instance => instance.id !== serviceId
             );
-        } catch (error) {
-            res.status(503).json({ error: 'Service temporarily unavailable' });
+            if (filtered.length < instances.length) {
+                this.services.set(name, filtered);
+                break;
+            }
         }
     }
-);
-```
 
-## Security Considerations
-
-### 1. TLS/SSL Configuration
-```typescript
-// HTTPS server with modern TLS configuration
-const https = require('https');
-const fs = require('fs');
-
-const options = {
-    key: fs.readFileSync('private-key.pem'),
-    cert: fs.readFileSync('certificate.pem'),
-    ciphers: [
-        'TLS_AES_128_GCM_SHA256',
-        'TLS_AES_256_GCM_SHA384',
-        'TLS_CHACHA20_POLY1305_SHA256'
-    ].join(':'),
-    minVersion: 'TLSv1.2',
-    preferServerCiphers: true
-};
-
-https.createServer(options, app).listen(443);
-```
-
-### 2. Network Policies
-```yaml
-# Kubernetes Network Policy example
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: api-network-policy
-spec:
-  podSelector:
-    matchLabels:
-      app: api
-  policyTypes:
-    - Ingress
-    - Egress
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              type: frontend
-        - namespaceSelector:
-            matchLabels:
-              purpose: monitoring
-      ports:
-        - protocol: TCP
-          port: 80
-  egress:
-    - to:
-        - podSelector:
-            matchLabels:
-              app: database
-      ports:
-        - protocol: TCP
-          port: 5432
+    private isInstanceHealthy(
+        instance: ServiceInstance
+    ): boolean {
+        return Date.now() - instance.lastHeartbeat < this.ttl;
+    }
+}
 ```
 
 ## Best Practices
 
-1. **Protocol Selection**
-   - Choose based on requirements (latency, throughput, compatibility)
-   - Consider client platform support
-   - Evaluate tooling ecosystem
-   - Account for security needs
+1. **Protocol Design**
+   - Define clear contracts
+   - Version your protocols
+   - Handle backward compatibility
+   - Document thoroughly
 
-2. **Network Security**
-   - Implement defense in depth
-   - Use TLS 1.2+ everywhere
-   - Apply principle of least privilege
-   - Regular security audits
+2. **Network Design**
+   - Plan for scalability
+   - Implement security
+   - Monitor performance
+   - Handle failures gracefully
 
-3. **Performance Optimization**
-   - Implement caching strategies
-   - Use compression
-   - Enable HTTP/2 where possible
-   - Monitor network metrics
+3. **Performance**
+   - Minimize latency
+   - Optimize throughput
+   - Use caching effectively
+   - Compress data
 
-4. **Error Handling**
-   - Implement retry policies
-   - Use circuit breakers
-   - Proper error status codes
-   - Detailed error logging
+4. **Security**
+   - Encrypt in transit
+   - Authenticate requests
+   - Validate input
+   - Monitor access
 
-Remember: Network design decisions have significant impact on system scalability, security, and maintainability. Always consider future growth and security implications when designing network architectures.
+Remember: Network and protocol design decisions have long-lasting impacts on system performance, scalability, and maintainability. Choose protocols and patterns that align with your requirements while considering future growth and changes.

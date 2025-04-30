@@ -99,7 +99,7 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 ### Deep Understanding Required
 - [ ] Threat modeling
 - [ ] [Security Architecture Patterns](src/Security_Architecture_Patterns.md)
-- [ ] Zero Trust architecture principles
+- [ ] [Zero Trust Architecture Principles](src/Zero_Trust_Architecture_Principles.md)
 - [ ] [Authentication and Authorization Frameworks](src/Authentication_and_Authorization_Frameworks.md)
 - [ ] Data protection strategies
 - [ ] Security compliance requirements for your industry

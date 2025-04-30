@@ -1,376 +1,418 @@
-# Message Broker Architectures and Patterns
+# Message Broker Architectures
 
 ```mermaid
 mindmap
     root((Message
         Brokers))
         (Patterns)
-            [Publish/Subscribe]
+            [Pub/Sub]
             [Point-to-Point]
             [Request/Reply]
             [Competing Consumers]
-        (Message Types)
-            [Commands]
-            [Events]
-            [Documents]
-            [Queries]
-        (Reliability)
+        (Features)
+            [Reliability]
+            [Scalability]
+            [Ordering]
             [Persistence]
-            [Acknowledgments]
+        (Components)
+            [Producers]
+            [Consumers]
+            [Topics/Queues]
             [Dead Letter]
-            [Retries]
-        (Integration)
-            [Service Bus]
-            [Event Grid]
-            [RabbitMQ]
+        (Technologies)
             [Kafka]
+            [RabbitMQ]
+            [Azure ServiceBus]
+            [AWS SQS/SNS]
 ```
 
-## Overview
-
-Message brokers enable loose coupling and asynchronous communication between services in distributed systems. This guide covers common patterns and implementations using Azure Service Bus and RabbitMQ with C# and Python examples.
-
-## Core Patterns
+## Core Message Patterns
 
 ### 1. Publish/Subscribe Pattern
 
-#### C# Implementation using Azure Service Bus
-```csharp
-using Azure.Messaging.ServiceBus;
-using Azure.Identity;
+```mermaid
+graph LR
+    subgraph "Pub/Sub Architecture"
+        P1[Producer 1] --> T[Topic]
+        P2[Producer 2] --> T
+        T --> S1[Subscription 1]
+        T --> S2[Subscription 2]
+        T --> S3[Subscription 3]
+    end
+```
 
-public class EventPublisher
-{
-    private readonly ServiceBusClient _client;
-    private readonly string _topicName;
+Implementation Example (using Azure Service Bus):
+```typescript
+// Message publisher with retry policy
+class EventPublisher {
+    constructor(
+        private serviceBusClient: ServiceBusClient,
+        private topicName: string
+    ) {}
 
-    public EventPublisher(string serviceBusNamespace, string topicName)
-    {
-        // Use managed identity for authentication
-        _client = new ServiceBusClient(
-            serviceBusNamespace,
-            new DefaultAzureCredential());
-        _topicName = topicName;
-    }
-
-    public async Task PublishEventAsync<T>(T eventData)
-    {
-        var sender = _client.CreateSender(_topicName);
+    async publishEvent<T extends DomainEvent>(
+        event: T,
+        options: PublishOptions = {}
+    ): Promise<void> {
+        const sender = this.serviceBusClient.createSender(this.topicName);
         
-        try
-        {
-            var message = new ServiceBusMessage(JsonSerializer.Serialize(eventData))
-            {
-                ContentType = "application/json",
-                Subject = typeof(T).Name,
-                CorrelationId = Guid.NewGuid().ToString()
+        try {
+            const message = {
+                body: event,
+                contentType: 'application/json',
+                messageId: uuidv4(),
+                correlationId: options.correlationId,
+                subject: event.eventType,
+                userProperties: {
+                    eventType: event.eventType,
+                    version: '1.0',
+                    source: 'order-service'
+                }
             };
 
-            await sender.SendMessageAsync(message);
+            await this.executeWithRetry(() => 
+                sender.sendMessages(message)
+            );
+        } finally {
+            await sender.close();
         }
-        catch (Exception ex)
-        {
-            // Log and handle exception
-            throw;
-        }
-        finally
-        {
-            await sender.DisposeAsync();
+    }
+
+    private async executeWithRetry(
+        operation: () => Promise<void>
+    ): Promise<void> {
+        const retryOptions = {
+            maxRetries: 3,
+            delay: 1000,
+            backoffCoefficient: 2
+        };
+
+        let attempt = 0;
+        while (attempt <= retryOptions.maxRetries) {
+            try {
+                await operation();
+                return;
+            } catch (error) {
+                if (attempt === retryOptions.maxRetries) {
+                    throw error;
+                }
+                await this.delay(
+                    retryOptions.delay * 
+                    Math.pow(retryOptions.backoffCoefficient, attempt)
+                );
+                attempt++;
+            }
         }
     }
 }
 
-public class EventSubscriber
-{
-    private readonly ServiceBusClient _client;
-    private readonly string _topicName;
-    private readonly string _subscriptionName;
+// Message subscriber with dead letter handling
+class EventSubscriber {
+    constructor(
+        private serviceBusClient: ServiceBusClient,
+        private topicName: string,
+        private subscriptionName: string
+    ) {}
 
-    public EventSubscriber(string serviceBusNamespace, string topicName, string subscriptionName)
-    {
-        _client = new ServiceBusClient(
-            serviceBusNamespace,
-            new DefaultAzureCredential());
-        _topicName = topicName;
-        _subscriptionName = subscriptionName;
+    async subscribe(
+        handler: (event: DomainEvent) => Promise<void>
+    ): Promise<void> {
+        const receiver = this.serviceBusClient.createReceiver(
+            this.topicName,
+            this.subscriptionName
+        );
+
+        receiver.subscribe({
+            processMessage: async (message) => {
+                try {
+                    await handler(message.body);
+                    await message.complete();
+                } catch (error) {
+                    if (this.isTransientError(error)) {
+                        await message.abandon();
+                    } else {
+                        await this.moveToDeadLetter(
+                            message,
+                            error.message
+                        );
+                    }
+                }
+            },
+            processError: async (error) => {
+                console.error('Error processing message:', error);
+            }
+        });
     }
 
-    public async Task StartProcessingAsync(
-        Func<ServiceBusReceivedMessage, Task> messageHandler)
-    {
-        var processor = _client.CreateProcessor(
-            _topicName, 
-            _subscriptionName,
-            new ServiceBusProcessorOptions
-            {
-                MaxConcurrentCalls = 1,
-                AutoCompleteMessages = false
-            });
-
-        processor.ProcessMessageAsync += async args =>
-        {
-            try
-            {
-                await messageHandler(args.Message);
-                await args.CompleteMessageAsync(args.Message);
-            }
-            catch (Exception ex)
-            {
-                // Log error and abandon message
-                await args.AbandonMessageAsync(args.Message);
-            }
-        };
-
-        processor.ProcessErrorAsync += args =>
-        {
-            // Log error
-            return Task.CompletedTask;
-        };
-
-        await processor.StartProcessingAsync();
+    private async moveToDeadLetter(
+        message: ServiceBusMessage,
+        reason: string
+    ): Promise<void> {
+        await message.deadLetter({
+            deadLetterReason: reason,
+            deadLetterErrorDescription: reason
+        });
     }
 }
 ```
 
-#### Python Implementation using RabbitMQ
-```python
-import pika
-import json
-from typing import Any, Callable
-import logging
-from contextlib import contextmanager
-
-class EventPublisher:
-    def __init__(self, host: str, exchange: str):
-        self.host = host
-        self.exchange = exchange
-        
-    @contextmanager
-    def connection(self):
-        connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host=self.host)
-        )
-        try:
-            yield connection
-        finally:
-            connection.close()
-            
-    def publish_event(self, routing_key: str, event_data: Any):
-        with self.connection() as connection:
-            channel = connection.channel()
-            
-            # Declare exchange
-            channel.exchange_declare(
-                exchange=self.exchange,
-                exchange_type='topic',
-                durable=True
-            )
-            
-            # Publish message
-            channel.basic_publish(
-                exchange=self.exchange,
-                routing_key=routing_key,
-                body=json.dumps(event_data),
-                properties=pika.BasicProperties(
-                    delivery_mode=2,  # Make message persistent
-                    content_type='application/json'
-                )
-            )
-            
-            logging.info(f"Published event: {routing_key}")
-
-class EventSubscriber:
-    def __init__(self, host: str, exchange: str, queue: str):
-        self.host = host
-        self.exchange = exchange
-        self.queue = queue
-        
-    def start_consuming(self, routing_key: str, callback: Callable[[Any], None]):
-        connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host=self.host)
-        )
-        channel = connection.channel()
-        
-        # Declare exchange and queue
-        channel.exchange_declare(
-            exchange=self.exchange,
-            exchange_type='topic',
-            durable=True
-        )
-        
-        channel.queue_declare(
-            queue=self.queue,
-            durable=True
-        )
-        
-        channel.queue_bind(
-            exchange=self.exchange,
-            queue=self.queue,
-            routing_key=routing_key
-        )
-        
-        def message_handler(ch, method, properties, body):
-            try:
-                data = json.loads(body)
-                callback(data)
-                ch.basic_ack(delivery_tag=method.delivery_tag)
-            except Exception as e:
-                logging.error(f"Error processing message: {e}")
-                ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
-        
-        channel.basic_qos(prefetch_count=1)
-        channel.basic_consume(
-            queue=self.queue,
-            on_message_callback=message_handler
-        )
-        
-        logging.info(f"Started consuming from {self.queue}")
-        channel.start_consuming()
-```
-
-### 2. Request/Reply Pattern
-
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant RQ as Request Queue
-    participant S as Service
-    participant RQ as Reply Queue
-    
-    C->>RQ: Send Request (with ReplyTo)
-    RQ->>S: Deliver Request
-    S->>RQ: Send Reply
-    RQ->>C: Deliver Reply
-```
-
-### 3. Competing Consumers Pattern
+### 2. Competing Consumers Pattern
 
 ```mermaid
 graph TB
-    subgraph "Message Queue"
-        Q[Queue]
+    subgraph "Queue Processing"
+        Q[Queue] --> C1[Consumer 1]
+        Q --> C2[Consumer 2]
+        Q --> C3[Consumer 3]
+        
+        subgraph "Load Balancing"
+            LB[Message Distribution]
+        end
     end
-    
-    subgraph "Consumers"
-        C1[Consumer 1]
-        C2[Consumer 2]
-        C3[Consumer 3]
-    end
-    
-    Q --> C1
-    Q --> C2
-    Q --> C3
 ```
 
-## Message Types and Use Cases
+Implementation Example (using RabbitMQ):
+```typescript
+// Competing consumer implementation
+class WorkQueue {
+    constructor(
+        private channel: amqp.Channel,
+        private queueName: string
+    ) {}
 
-1. **Commands**
-   - Direct actions to be performed
-   - Single handler
-   - Example: PlaceOrder, CancelSubscription
+    async processMessages(
+        processor: (msg: WorkItem) => Promise<void>,
+        concurrency: number
+    ): Promise<void> {
+        // Set up prefetch for fair dispatch
+        await this.channel.prefetch(concurrency);
 
-2. **Events**
-   - Notifications of state changes
-   - Multiple handlers
-   - Example: OrderPlaced, UserRegistered
+        // Set up queue with dead letter exchange
+        await this.channel.assertQueue(this.queueName, {
+            durable: true,
+            arguments: {
+                'x-dead-letter-exchange': 'dlx',
+                'x-dead-letter-routing-key': `${this.queueName}.dlq`
+            }
+        });
 
-3. **Documents**
-   - Data transfer between services
-   - Complete state
-   - Example: CustomerProfile, ProductCatalog
+        // Start consuming with multiple consumers
+        for (let i = 0; i < concurrency; i++) {
+            this.channel.consume(
+                this.queueName,
+                async (msg) => {
+                    if (!msg) return;
 
-## Reliability Patterns
+                    try {
+                        const workItem = JSON.parse(msg.content.toString());
+                        await processor(workItem);
+                        this.channel.ack(msg);
+                    } catch (error) {
+                        if (this.shouldRetry(error, msg)) {
+                            this.channel.nack(msg, false, true);
+                        } else {
+                            this.channel.reject(msg, false);
+                        }
+                    }
+                },
+                { noAck: false }
+            );
+        }
+    }
 
-### 1. Dead Letter Queue Implementation
+    private shouldRetry(
+        error: Error,
+        msg: amqp.ConsumeMessage
+    ): boolean {
+        const retryCount = this.getRetryCount(msg);
+        return retryCount < 3 && this.isTransientError(error);
+    }
 
-```python
-from azure.servicebus import ServiceBusClient, ServiceBusMessage
-from azure.identity import DefaultAzureCredential
-
-class ReliableMessageHandler:
-    def __init__(self, namespace: str, queue_name: str):
-        credential = DefaultAzureCredential()
-        self.servicebus_client = ServiceBusClient(
-            fully_qualified_namespace=namespace,
-            credential=credential
-        )
-        self.queue_name = queue_name
-    
-    async def process_messages(self):
-        async with self.servicebus_client:
-            receiver = self.servicebus_client.get_queue_receiver(
-                queue_name=self.queue_name
-            )
-            async with receiver:
-                try:
-                    messages = await receiver.receive_messages(
-                        max_message_count=10,
-                        max_wait_time=5
-                    )
-                    for msg in messages:
-                        try:
-                            # Process the message
-                            await self.process_message(msg)
-                            await receiver.complete_message(msg)
-                        except Exception as e:
-                            # Move to dead letter queue if max retries reached
-                            if msg.delivery_count >= 3:
-                                await receiver.dead_letter_message(
-                                    msg,
-                                    reason="Max retries exceeded",
-                                    error_description=str(e)
-                                )
-                            else:
-                                await receiver.abandon_message(msg)
-                except Exception as e:
-                    logging.error(f"Error receiving messages: {e}")
-                    raise
-```
-
-### 2. Circuit Breaker Pattern
-
-```csharp
-public class MessageBrokerCircuitBreaker
-{
-    private readonly string _serviceBusNamespace;
-    private readonly string _queueName;
-    private readonly CircuitBreaker _circuitBreaker;
-
-    public MessageBrokerCircuitBreaker(
-        string serviceBusNamespace, 
-        string queueName)
-    {
-        _serviceBusNamespace = serviceBusNamespace;
-        _queueName = queueName;
-        _circuitBreaker = new CircuitBreaker(
-            taskProvider: () => SendMessageInternalAsync(),
-            failureThreshold: 3,
-            recoveryTime: TimeSpan.FromSeconds(30)
+    private getRetryCount(msg: amqp.ConsumeMessage): number {
+        const deaths = msg.properties.headers['x-death'] || [];
+        return deaths.reduce((count, death) => 
+            count + death.count, 0
         );
     }
+}
+```
 
-    public async Task SendMessageAsync(string message)
-    {
-        await _circuitBreaker.ExecuteAsync(() => 
-            new ServiceBusMessage(message));
+### 3. Request/Reply Pattern
+
+```mermaid
+graph LR
+    subgraph "Request/Reply"
+        C[Client] --> |Request| RQ[Request Queue]
+        RQ --> S[Service]
+        S --> |Reply| RR[Reply Queue]
+        RR --> C
+    end
+```
+
+Implementation Example (using Apache Kafka):
+```typescript
+// Request/reply pattern with correlation
+class RequestReplyClient {
+    constructor(
+        private producer: kafka.Producer,
+        private consumer: kafka.Consumer,
+        private requestTopic: string,
+        private replyTopic: string
+    ) {}
+
+    async request<T, R>(
+        request: T,
+        timeout: number = 5000
+    ): Promise<R> {
+        const correlationId = uuidv4();
+        
+        // Set up reply consumer before sending request
+        const replyPromise = this.awaitReply<R>(correlationId, timeout);
+
+        // Send request
+        await this.producer.send({
+            topic: this.requestTopic,
+            messages: [{
+                key: correlationId,
+                value: JSON.stringify(request),
+                headers: {
+                    correlationId,
+                    replyTo: this.replyTopic
+                }
+            }]
+        });
+
+        // Wait for reply
+        return replyPromise;
     }
 
-    private async Task SendMessageInternalAsync(ServiceBusMessage message)
-    {
-        var client = new ServiceBusClient(
-            _serviceBusNamespace,
-            new DefaultAzureCredential());
-        var sender = client.CreateSender(_queueName);
+    private awaitReply<R>(
+        correlationId: string,
+        timeout: number
+    ): Promise<R> {
+        return new Promise((resolve, reject) => {
+            const timeoutId = setTimeout(() => {
+                reject(new Error('Request timeout'));
+            }, timeout);
 
-        try
-        {
-            await sender.SendMessageAsync(message);
+            this.consumer.subscribe({
+                topic: this.replyTopic,
+                callback: (message) => {
+                    if (message.headers.correlationId === correlationId) {
+                        clearTimeout(timeoutId);
+                        resolve(JSON.parse(message.value.toString()));
+                    }
+                }
+            });
+        });
+    }
+}
+
+// Request/reply service implementation
+class RequestReplyService {
+    constructor(
+        private consumer: kafka.Consumer,
+        private producer: kafka.Producer,
+        private requestTopic: string,
+        private handler: (request: any) => Promise<any>
+    ) {}
+
+    async start(): Promise<void> {
+        await this.consumer.subscribe({
+            topic: this.requestTopic,
+            callback: async (message) => {
+                try {
+                    const request = JSON.parse(message.value.toString());
+                    const response = await this.handler(request);
+
+                    await this.producer.send({
+                        topic: message.headers.replyTo,
+                        messages: [{
+                            value: JSON.stringify(response),
+                            headers: {
+                                correlationId: message.headers.correlationId
+                            }
+                        }]
+                    });
+                } catch (error) {
+                    // Handle error response
+                    await this.sendErrorResponse(message, error);
+                }
+            }
+        });
+    }
+}
+```
+
+## High Availability Patterns
+
+### 1. Mirror Queue Pattern
+
+```mermaid
+graph TB
+    subgraph "HA Setup"
+        Q1[Primary Queue] --> |Mirror| Q2[Mirror 1]
+        Q1 --> |Mirror| Q3[Mirror 2]
+        
+        subgraph "Failover"
+            F[Failover Detection]
+            P[Promotion]
+        end
+    end
+```
+
+Implementation Example:
+```typescript
+// High availability queue configuration
+class HAQueueManager {
+    constructor(
+        private brokerNodes: BrokerNode[],
+        private queueName: string
+    ) {}
+
+    async setupHAQueue(): Promise<void> {
+        // Set up queue with mirroring
+        const policy = {
+            pattern: this.queueName,
+            definition: {
+                'ha-mode': 'all',
+                'ha-sync-mode': 'automatic',
+                'ha-promote-on-failure': true
+            }
+        };
+
+        await this.applyHAPolicy(policy);
+        await this.setupHealthCheck();
+    }
+
+    private async setupHealthCheck(): Promise<void> {
+        const monitor = new QueueHealthMonitor(
+            this.brokerNodes,
+            this.queueName
+        );
+
+        monitor.onFailure(async (failedNode) => {
+            await this.handleNodeFailure(failedNode);
+        });
+
+        await monitor.start();
+    }
+
+    private async handleNodeFailure(
+        node: BrokerNode
+    ): Promise<void> {
+        // Promote mirror if primary fails
+        if (node.isPrimary) {
+            await this.promoteMirror();
         }
-        finally
-        {
-            await sender.DisposeAsync();
-            await client.DisposeAsync();
-        }
+
+        // Notify operations
+        await this.notifyOperations({
+            event: 'NODE_FAILURE',
+            node: node.id,
+            queue: this.queueName,
+            timestamp: new Date()
+        });
     }
 }
 ```
@@ -378,45 +420,27 @@ public class MessageBrokerCircuitBreaker
 ## Best Practices
 
 1. **Message Design**
-   - Keep messages self-contained
-   - Use versioning for message schemas
-   - Include correlation IDs
-   - Consider message size limits
+   - Use versioned schemas
+   - Include metadata
+   - Plan for backward compatibility
+   - Consider message size
 
 2. **Error Handling**
    - Implement dead letter queues
    - Use retry policies
-   - Monitor failed messages
-   - Implement circuit breakers
+   - Handle poison messages
+   - Log failed messages
 
 3. **Performance**
-   - Use batch processing when possible
-   - Implement back pressure
-   - Monitor queue lengths
-   - Scale consumers horizontally
+   - Configure prefetch counts
+   - Implement batching
+   - Monitor queue depths
+   - Scale consumers appropriately
 
-4. **Security**
-   - Use managed identities
-   - Implement message encryption
-   - Use RBAC for queue access
-   - Monitor unusual patterns
+4. **Reliability**
+   - Use persistent messages
+   - Implement acknowledgments
+   - Set up high availability
+   - Monitor broker health
 
-## Monitoring Pattern
-
-```mermaid
-graph TB
-    subgraph "Message Monitoring"
-        Q[Queue/Topic]
-        M[Metrics Collector]
-        A[Alert Manager]
-        D[Dashboard]
-        
-        Q -->|Queue Length| M
-        Q -->|Processing Time| M
-        Q -->|Error Rate| M
-        M --> A
-        M --> D
-    end
-```
-
-Remember: Message brokers are crucial for building resilient, scalable distributed systems. Choose patterns and implementations based on your specific requirements for reliability, scalability, and message delivery guarantees.
+Remember: Message broker architectures are crucial for building reliable, scalable distributed systems. Choose patterns and configurations that match your specific requirements for reliability, scalability, and message delivery guarantees.

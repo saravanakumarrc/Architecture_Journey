@@ -14,11 +14,16 @@ mindmap
             [Entities]
             [Value Objects]
             [Domain Events]
-        (Architecture)
-            [Layered Architecture]
-            [Hexagonal Architecture]
+        (Building Blocks)
+            [Repositories]
+            [Factories]
+            [Services]
+            [Modules]
+        (Patterns)
             [CQRS]
             [Event Sourcing]
+            [Specification]
+            [Anti-Corruption Layer]
 ```
 
 ## Strategic Design Patterns
@@ -27,79 +32,316 @@ mindmap
 
 ```mermaid
 graph TB
-    subgraph "E-commerce Example"
-        direction TB
-        
+    subgraph "E-Commerce Domain"
         subgraph "Order Context"
             O[Order]
             C[Customer]
-            P[Payment]
-        end
-        
-        subgraph "Inventory Context"
-            I[Product]
-            S[Stock]
-            W[Warehouse]
+            P[Product]
         end
         
         subgraph "Shipping Context"
-            D[Delivery]
+            S[Shipment]
             A[Address]
             R[Route]
         end
         
+        subgraph "Inventory Context"
+            I[Stock]
+            W[Warehouse]
+            M[Movement]
+        end
+        
+        O --> S
         O --> I
-        O --> D
     end
+```
+
+Implementation Example:
+```typescript
+// Order bounded context
+namespace OrderContext {
+    interface Customer {
+        id: string;
+        name: string;
+        email: string;
+        shippingAddresses: ShippingAddress[];
+    }
+
+    interface Order {
+        id: string;
+        customerId: string;
+        items: OrderItem[];
+        status: OrderStatus;
+        total: Money;
+    }
+
+    // Domain service
+    class OrderService {
+        constructor(
+            private orderRepo: OrderRepository,
+            private customerRepo: CustomerRepository,
+            private eventBus: DomainEventBus
+        ) {}
+
+        async placeOrder(
+            customerId: string,
+            items: OrderItem[]
+        ): Promise<Order> {
+            const customer = await this.customerRepo.findById(customerId);
+            if (!customer) {
+                throw new CustomerNotFoundError(customerId);
+            }
+
+            const order = Order.create({
+                customerId,
+                items,
+                status: 'PENDING'
+            });
+
+            await this.validateOrder(order);
+            await this.orderRepo.save(order);
+            
+            await this.eventBus.publish(new OrderPlacedEvent(order));
+            
+            return order;
+        }
+    }
+}
+
+// Shipping bounded context
+namespace ShippingContext {
+    interface Shipment {
+        id: string;
+        orderId: string;
+        destination: Address;
+        status: ShipmentStatus;
+        route: Route;
+    }
+
+    // Different representation of Customer
+    interface ShippingCustomer {
+        id: string;
+        address: Address;
+        contactNumber: string;
+    }
+}
 ```
 
 ### 2. Context Mapping
 
 ```mermaid
-graph LR
+graph TB
     subgraph "Context Relationships"
-        direction LR
+        O[Order Context] --> |Customer/Supplier| S[Shipping Context]
+        O --> |Partnership| P[Payment Context]
+        O --> |Anti-Corruption Layer| L[Legacy Context]
         
-        C1[Context A] -->|Partnership| C2[Context B]
-        C2 -->|Customer/Supplier| C3[Context C]
-        C3 -->|Conformist| C4[Context D]
-        C1 -->|Anti-corruption Layer| C4
+        subgraph "Integration Patterns"
+            CS[Customer/Supplier]
+            CM[Conformist]
+            ACL[Anti-Corruption Layer]
+        end
     end
+```
+
+Implementation Example:
+```typescript
+// Anti-corruption layer for legacy system
+class LegacySystemAdapter {
+    constructor(private legacyClient: LegacySystemClient) {}
+
+    async translateOrder(
+        modernOrder: Order
+    ): Promise<LegacyOrder> {
+        return {
+            orderNumber: modernOrder.id,
+            customerCode: this.translateCustomerId(modernOrder.customerId),
+            items: modernOrder.items.map(this.translateOrderItem),
+            // Map modern to legacy status
+            status: this.translateStatus(modernOrder.status)
+        };
+    }
+
+    private translateStatus(
+        modernStatus: OrderStatus
+    ): LegacyOrderStatus {
+        const statusMap = {
+            'PENDING': 'P',
+            'CONFIRMED': 'C',
+            'SHIPPED': 'S',
+            'DELIVERED': 'D',
+            'CANCELLED': 'X'
+        };
+        
+        return statusMap[modernStatus] || 'U';
+    }
+}
+
+// Context map configuration
+const contextMap = {
+    relationships: [
+        {
+            upstream: 'OrderContext',
+            downstream: 'ShippingContext',
+            type: 'CUSTOMER_SUPPLIER',
+            contract: 'OrderShippingContract'
+        },
+        {
+            upstream: 'LegacyContext',
+            downstream: 'OrderContext',
+            type: 'ANTICORRUPTION_LAYER',
+            adapter: LegacySystemAdapter
+        }
+    ]
+};
 ```
 
 ## Tactical Design Patterns
 
-### 1. Entity Pattern
-```typescript
-class Order {
-    private readonly id: OrderId;
-    private items: OrderItem[];
-    private status: OrderStatus;
+### 1. Aggregates and Entities
 
-    constructor(id: OrderId) {
-        this.id = id;
-        this.items = [];
-        this.status = OrderStatus.Created;
+```mermaid
+graph TB
+    subgraph "Order Aggregate"
+        O[Order Root] --> I[Order Items]
+        O --> A[Shipping Address]
+        O --> P[Payment Info]
+        
+        subgraph "Invariants"
+            V1[Total = Sum of Items]
+            V2[Valid Payment]
+            V3[Valid Address]
+        end
+    end
+```
+
+Implementation Example:
+```typescript
+// Order aggregate
+class Order {
+    private constructor(
+        private readonly props: OrderProps,
+        private readonly id: string
+    ) {}
+
+    static create(props: OrderProps): Order {
+        const order = new Order(props, generateId());
+        order.validate();
+        return order;
     }
 
     addItem(item: OrderItem): void {
-        if (this.status !== OrderStatus.Created) {
-            throw new OrderModificationError();
+        this.props.items.push(item);
+        this.validateTotal();
+        this.addDomainEvent(new OrderItemAddedEvent(this, item));
+    }
+
+    private validate(): void {
+        if (this.props.items.length === 0) {
+            throw new OrderMustHaveItemsError();
         }
-        this.items.push(item);
+        this.validateTotal();
+        this.validateShippingAddress();
+    }
+
+    private validateTotal(): void {
+        const calculatedTotal = this.props.items
+            .reduce((sum, item) => sum + item.price * item.quantity, 0);
+            
+        if (calculatedTotal !== this.props.total) {
+            throw new InvalidOrderTotalError();
+        }
     }
 }
 ```
 
-### 2. Value Object Pattern
-```typescript
-class Money {
-    private readonly amount: number;
-    private readonly currency: Currency;
+### 2. Domain Events
 
-    constructor(amount: number, currency: Currency) {
-        this.amount = amount;
-        this.currency = currency;
+```mermaid
+graph LR
+    subgraph "Event Flow"
+        E[Event] --> H[Handlers]
+        H --> S1[Service 1]
+        H --> S2[Service 2]
+        H --> S3[Service 3]
+    end
+```
+
+Implementation Example:
+```typescript
+// Domain event implementation
+interface DomainEvent {
+    readonly occurredAt: Date;
+    readonly eventType: string;
+}
+
+class OrderPlacedEvent implements DomainEvent {
+    readonly occurredAt: Date;
+    readonly eventType: string = 'ORDER_PLACED';
+
+    constructor(
+        public readonly order: Order,
+        public readonly customerId: string
+    ) {
+        this.occurredAt = new Date();
+    }
+}
+
+// Event handler
+class OrderPlacedHandler implements EventHandler<OrderPlacedEvent> {
+    constructor(
+        private inventoryService: InventoryService,
+        private notificationService: NotificationService
+    ) {}
+
+    async handle(event: OrderPlacedEvent): Promise<void> {
+        // Reserve inventory
+        await this.inventoryService.reserveItems(
+            event.order.items
+        );
+
+        // Notify customer
+        await this.notificationService.notifyCustomer(
+            event.customerId,
+            'ORDER_CONFIRMATION',
+            {
+                orderId: event.order.id,
+                total: event.order.total
+            }
+        );
+    }
+}
+```
+
+### 3. Value Objects
+
+```mermaid
+graph TB
+    subgraph "Value Objects"
+        M[Money] --> C[Currency]
+        M --> A[Amount]
+        
+        AD[Address] --> S[Street]
+        AD --> CT[City]
+        AD --> Z[ZIP]
+        
+        E[Email] --> V[Validation]
+    end
+```
+
+Implementation Example:
+```typescript
+// Value object implementation
+class Money {
+    private constructor(
+        private readonly amount: number,
+        private readonly currency: Currency
+    ) {
+        this.validate();
+    }
+
+    static create(amount: number, currency: Currency): Money {
+        return new Money(amount, currency);
     }
 
     add(other: Money): Money {
@@ -108,113 +350,65 @@ class Money {
         }
         return new Money(this.amount + other.amount, this.currency);
     }
+
+    private validate(): void {
+        if (this.amount < 0) {
+            throw new NegativeAmountError();
+        }
+    }
+
+    equals(other: Money): boolean {
+        return this.amount === other.amount && 
+               this.currency === other.currency;
+    }
 }
-```
 
-### 3. Aggregate Pattern
+// Email value object with validation
+class Email {
+    private constructor(private readonly value: string) {
+        this.validate();
+    }
 
-```mermaid
-graph TB
-    subgraph "Order Aggregate"
-        O[Order Root] --> I[OrderItem]
-        O --> A[Address]
-        O --> P[Payment]
-        I --> D[Discount]
-    end
-```
+    static create(email: string): Email {
+        return new Email(email);
+    }
 
-## Domain Events
+    private validate(): void {
+        if (!this.isValidEmail(this.value)) {
+            throw new InvalidEmailError(this.value);
+        }
+    }
 
-### Event Flow Pattern
-```mermaid
-sequenceDiagram
-    participant O as Order Service
-    participant E as Event Bus
-    participant I as Inventory Service
-    participant S as Shipping Service
-
-    O->>E: OrderCreated
-    E->>I: Update Inventory
-    E->>S: Prepare Shipment
-    I-->>E: InventoryUpdated
-    S-->>E: ShipmentPrepared
-    E-->>O: Order Status Updated
-```
-
-## Implementation Guidelines
-
-### 1. Ubiquitous Language
-- Use domain terms consistently
-- Document domain vocabulary
-- Reflect language in code
-- Evolve language with domain experts
-
-### 2. Bounded Context Guidelines
-- Define clear boundaries
-- Identify context relationships
-- Document context maps
-- Maintain context integrity
-
-### 3. Aggregate Design Rules
-- Keep aggregates small
-- Ensure business invariants
-- Use eventual consistency between aggregates
-- Reference other aggregates by ID
-
-## Architecture Patterns
-
-### 1. Layered Architecture
-```mermaid
-graph TB
-    subgraph "DDD Layers"
-        UI[User Interface]
-        APP[Application]
-        DOM[Domain]
-        INF[Infrastructure]
-        
-        UI --> APP
-        APP --> DOM
-        APP --> INF
-        INF --> DOM
-    end
-```
-
-### 2. CQRS with Domain Events
-```mermaid
-graph TB
-    subgraph "CQRS Pattern"
-        C[Commands] --> M[Command Handler]
-        M --> A[Aggregate]
-        A --> E[Events]
-        E --> P[Projections]
-        Q[Queries] --> V[View Model]
-    end
+    toString(): string {
+        return this.value;
+    }
+}
 ```
 
 ## Best Practices
 
-1. **Domain Modeling**
-   - Focus on business rules
-   - Identify domain experts
+1. **Strategic Design**
+   - Focus on core domain
+   - Define clear boundaries
+   - Create ubiquitous language
+   - Map context relationships
+
+2. **Tactical Design**
+   - Keep aggregates small
+   - Protect invariants
+   - Use value objects
    - Model state transitions
-   - Document assumptions
 
-2. **Testing Strategy**
-   - Unit test domain logic
-   - Test aggregate invariants
-   - Verify event handling
-   - Test business scenarios
+3. **Implementation**
+   - Use domain events
+   - Implement repositories
+   - Apply CQRS when needed
+   - Validate at boundaries
 
-3. **Performance Considerations**
-   - Aggregate size limits
-   - Event sourcing overhead
-   - Read model optimization
-   - Eventual consistency impact
+4. **Communication**
+   - Document context maps
+   - Share ubiquitous language
+   - Define team boundaries
+   - Align with business
 
-4. **Common Pitfalls**
-   - Over-complicated models
-   - Missing bounded contexts
-   - Anemic domain models
-   - Inconsistent language
-
-Remember: DDD is most valuable for complex domains with sophisticated business rules. For simpler applications, a more straightforward approach might be more appropriate.
+Remember: Domain-Driven Design is about creating a shared understanding between technical and domain experts. Focus on the core domain and maintain clear boundaries between different contexts.
