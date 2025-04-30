@@ -98,9 +98,9 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 
 ### Deep Understanding Required
 - [ ] Threat modeling
-- [ ] Security architecture frameworks
+- [ ] [Security Architecture Patterns](src/Security_Architecture_Patterns.md)
 - [ ] Zero Trust architecture principles
-- [ ] Identity and access management
+- [ ] [Authentication and Authorization Frameworks](src/Authentication_and_Authorization_Frameworks.md)
 - [ ] Data protection strategies
 - [ ] Security compliance requirements for your industry
 
@@ -116,9 +116,9 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 
 ### Deep Understanding Required
 - [ ] Software development methodologies
-- [ ] Technical debt management
+- [ ] [Technical Debt Management](src/Technical_Debt_Management.md)
 - [ ] Refactoring strategies
-- [ ] Testing strategies (unit, integration, system, contract)
+- [ ] [Testing Best Practices](src/Testing_Best_Practices.md)
 - [ ] Code quality metrics and standards
 
 ### Basic Understanding Required
@@ -148,12 +148,12 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 ## Observability & Operations
 
 ### Deep Understanding Required
-- [ ] Monitoring strategy design
+- [ ] [Monitoring and Observability Patterns](src/Monitoring_and_Observability_Patterns.md)
 - [ ] SLI/SLO/SLA definitions
 - [ ] Logging architectures
 - [ ] Alerting philosophies
 - [ ] Disaster recovery planning
-- [ ] Incident management frameworks
+- [ ] [Resilience Patterns](src/Resilience_Patterns.md)
 
 ### Basic Understanding Required
 - [ ] Specific monitoring tools (Prometheus, Grafana, etc.)
@@ -197,7 +197,7 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 ## Emerging Technologies
 
 ### Basic Understanding Required
-- [ ] AI/ML application patterns
+- [ ] [AI/ML Application Patterns](src/AI_ML_Application_Patterns.md)
 - [ ] Serverless architecture patterns
 - [ ] Edge computing models
 - [ ] IoT architecture patterns (if relevant)
@@ -211,6 +211,7 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 - [ ] Architecture governance models
 - [ ] Technology selection frameworks
 - [ ] Architecture review processes
+- [ ] [Trade-off Analysis](src/Trade_off_Analysis.md)
 
 ### Basic Understanding Required
 - [ ] Enterprise architecture frameworks (TOGAF, Zachman, etc.)
