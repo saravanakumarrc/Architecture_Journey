@@ -43,7 +43,7 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 - [ ] [Concurrency and parallelism concepts](src/Concurrency_and_Parallelism_Concepts.md)
 - [ ] [Data modeling and database design](src/Data_Modeling_and_Database_Design.md)
 - [ ] [API design (REST, GraphQL, gRPC)](src/API_Design_Concepts.md)
-- [ ] Authentication and authorization frameworks
+- [ ] [Serverless architecture patterns](src/Serverless_Architecture_Patterns.md)
 - [ ] Security by design principles
 
 ### Basic Understanding Required
