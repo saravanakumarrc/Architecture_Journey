@@ -1,31 +1,5 @@
 # Data Architecture Patterns
 
-```mermaid
-mindmap
-    root((Data
-        Architecture))
-        (Storage Types)
-            [Relational]
-            [Document]
-            [Key-Value]
-            [Graph]
-        (Access Patterns)
-            [CRUD]
-            [CQRS]
-            [Event Sourcing]
-            [Polyglot]
-        (Distribution)
-            [Sharding]
-            [Replication]
-            [Partitioning]
-            [Federation]
-        (Integration)
-            [ETL]
-            [Change Data Capture]
-            [Data Lake]
-            [Data Mesh]
-```
-
 ## Core Data Patterns
 
 ### 1. CQRS (Command Query Responsibility Segregation)
@@ -46,45 +20,18 @@ graph TB
     end
 ```
 
-Implementation Example:
-```typescript
-// Command side
-interface OrderCommand {
-    createOrder(order: Order): Promise<string>;
-    updateOrder(orderId: string, update: OrderUpdate): Promise<void>;
-}
+#### Key Components
+1. **Command Side**
+   - Write operations
+   - Strong consistency
+   - Transaction support
+   - Data validation
 
-class OrderCommandHandler implements OrderCommand {
-    constructor(private writeDb: Database) {}
-
-    async createOrder(order: Order): Promise<string> {
-        const orderId = generateId();
-        await this.writeDb.execute(
-            'INSERT INTO orders (id, customer, items, status) VALUES (?, ?, ?, ?)',
-            [orderId, order.customer, JSON.stringify(order.items), 'pending']
-        );
-        await this.publishEvent('OrderCreated', { orderId, order });
-        return orderId;
-    }
-}
-
-// Query side
-interface OrderQuery {
-    getOrder(orderId: string): Promise<OrderDetails>;
-    getCustomerOrders(customerId: string): Promise<OrderSummary[]>;
-}
-
-class OrderQueryHandler implements OrderQuery {
-    constructor(private readDb: Database) {}
-
-    async getOrder(orderId: string): Promise<OrderDetails> {
-        return this.readDb.queryOne(
-            'SELECT * FROM order_details_view WHERE id = ?',
-            [orderId]
-        );
-    }
-}
-```
+2. **Query Side**
+   - Read operations
+   - Denormalized views
+   - Performance optimized
+   - Eventual consistency
 
 ### 2. Event Sourcing Pattern
 
@@ -99,49 +46,24 @@ graph LR
     end
 ```
 
-Implementation Example:
-```typescript
-// Event sourcing with snapshots
-class OrderAggregate {
-    private state: OrderState;
-    private version: number = 0;
-    
-    async loadFromHistory(events: Event[]): Promise<void> {
-        for (const event of events) {
-            this.apply(event);
-            this.version = event.version;
-        }
-    }
-    
-    createOrder(order: Order): Event {
-        this.ensureCanCreate(order);
-        
-        const event = {
-            type: 'OrderCreated',
-            data: order,
-            version: this.version + 1
-        };
-        
-        this.apply(event);
-        return event;
-    }
-    
-    private apply(event: Event): void {
-        switch (event.type) {
-            case 'OrderCreated':
-                this.state = {
-                    ...event.data,
-                    status: 'created'
-                };
-                break;
-            case 'OrderItemAdded':
-                this.state.items.push(event.data);
-                break;
-            // ... other event handlers
-        }
-    }
-}
-```
+#### Components
+1. **Event Store**
+   - Immutable log
+   - Sequential events
+   - Version tracking
+   - Event metadata
+
+2. **Projections**
+   - Specialized views
+   - Real-time processing
+   - Custom aggregations
+   - State reconstruction
+
+3. **Snapshots**
+   - Performance optimization
+   - State caching
+   - Recovery point
+   - Version control
 
 ### 3. Polyglot Persistence
 
@@ -164,63 +86,141 @@ graph TB
     end
 ```
 
-Implementation Example:
-```typescript
-// Polyglot persistence manager
-class DataManager {
-    constructor(
-        private relationalDb: RelationalDB,
-        private documentDb: DocumentDB,
-        private searchDb: SearchDB,
-        private cacheDb: CacheDB
-    ) {}
+#### Storage Selection Matrix
 
-    async saveOrder(order: Order): Promise<void> {
-        // Save core transaction data
-        const orderId = await this.relationalDb.execute(
-            'INSERT INTO orders ...',
-            [order.id, order.customerId]
-        );
+| Data Type | Example Store | Use Case | Trade-offs |
+|-----------|--------------|-----------|------------|
+| Relational | PostgreSQL | ACID Transactions | Schema Rigidity |
+| Document | MongoDB | Flexible Schema | Eventually Consistent |
+| Search | Elasticsearch | Full-text Search | Index Overhead |
+| Cache | Redis | Fast Access | Volatile Storage |
 
-        // Save order details as document
-        await this.documentDb.orders.insertOne({
-            _id: orderId,
-            ...order,
-            metadata: { created: new Date() }
-        });
-
-        // Index for search
-        await this.searchDb.index('orders', {
-            id: orderId,
-            customerName: order.customerName,
-            items: order.items.map(i => i.name)
-        });
-
-        // Cache for quick access
-        await this.cacheDb.set(
-            `order:${orderId}`,
-            JSON.stringify(order),
-            'EX',
-            3600
-        );
-    }
-}
-```
-
-## Data Distribution Patterns
-
-### 1. Sharding Strategy
+### 4. Data Lake Architecture
 
 ```mermaid
 graph TB
-    subgraph "Sharding Architecture"
-        LB[Load Balancer]
+    subgraph "Data Lake"
+        I[Ingestion] --> R[Raw Zone]
+        R --> P[Processing]
+        P --> C[Curated Zone]
+        C --> A[Analytics]
         
-        subgraph "Shard 1"
-            S1[Server 1]
-            DB1[(Database 1)]
+        subgraph "Zones"
+            RZ[Raw]
+            ST[Staging]
+            CU[Curated]
         end
+    end
+```
+
+#### Zone Characteristics
+1. **Raw Zone**
+   - Original format
+   - Complete history
+   - Immutable data
+   - Schema-less
+
+2. **Processing Zone**
+   - Data transformation
+   - Quality checks
+   - Schema enforcement
+   - Temporary storage
+
+3. **Curated Zone**
+   - Business ready
+   - Optimized format
+   - Query friendly
+   - Analytics ready
+
+## Data Integration Patterns
+
+### 1. ETL/ELT Pipeline
+
+```mermaid
+graph LR
+    subgraph "Data Pipeline"
+        E[Extract] --> T[Transform]
+        T --> L[Load]
         
+        subgraph "Quality Checks"
+            V[Validation]
+            C[Cleansing]
+            S[Standardization]
+        end
+    end
+```
+
+### 2. Change Data Capture
+
+```mermaid
+graph TB
+    subgraph "CDC Flow"
+        SRC[Source DB] --> LOG[Transaction Log]
+        LOG --> CAP[Capture Process]
+        CAP --> Q[Message Queue]
+        Q --> CONS[Consumers]
+    end
+```
+
+### 3. Data Mesh
+
+```mermaid
+graph TB
+    subgraph "Data Mesh"
+        D1[Domain 1] --> P1[Product 1]
+        D2[Domain 2] --> P2[Product 2]
+        D3[Domain 3] --> P3[Product 3]
+        
+        subgraph "Infrastructure"
+            G[Governance]
+            I[Integration]
+            S[Security]
+        end
+    end
+```
+
+## Best Practices
+
+### 1. Data Governance
+- Data ownership
+- Quality standards
+- Security policies
+- Compliance rules
+- Metadata management
+
+### 2. Performance Optimization
+- Indexing strategy
+- Query optimization
+- Caching layers
+- Partitioning
+- Data distribution
+
+### 3. Security Framework
+```mermaid
+graph TB
+    subgraph "Security Layers"
+        A[Authentication]
+        Z[Authorization]
+        E[Encryption]
+        M[Monitoring]
+        
+        subgraph "Controls"
+            AC[Access Control]
+            DC[Data Classification]
+            AM[Audit Management]
+        end
+    end
+```
+
+### 4. Operational Excellence
+- Monitoring setup
+- Backup strategy
+- Recovery procedures
+- Scaling approach
+- Maintenance windows
+
+## Decision Framework
+
         subgraph "Shard 2"
             S2[Server 2]
             DB2[(Database 2)]
