@@ -38,7 +38,7 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 - [ ] [Software architecture patterns](src/Software_Architecture_Patterns.md) (Microservices, Event-driven, Layered, etc.)
 - [ ] [Performance optimization techniques](src/Performance_Optimization_Techniques.md)
 - [ ] [Scalability principles and implementations](src/Scalability_Principles_and_Implementations.md)
-- [ ] [High availability design](src/High_Availability_Design.md)
+- [ ] [High availability design](src/High_Availability_Design.md) (Active-Active, Active-Passive patterns, Azure Availability Zones, Azure Front Door, Traffic Manager)
 - [ ] [Distributed systems concepts](src/Distributed_Systems_Concepts.md)
 - [ ] [Concurrency and parallelism concepts](src/Concurrency_and_Parallelism_Concepts.md)
 - [ ] [Data modeling and database design](src/Data_Modeling_and_Database_Design.md)

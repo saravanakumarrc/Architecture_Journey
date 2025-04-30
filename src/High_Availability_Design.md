@@ -1,6 +1,32 @@
 # High Availability Design Principles and Implementations
 
-High Availability (HA) is the ability of a system to remain operational and accessible even in the face of component failures. Here's a comprehensive guide to high availability design principles and their implementations:
+```mermaid
+mindmap
+    root((High
+        Availability))
+        (Infrastructure)
+            [Redundancy]
+            [Load Balancing]
+            [Auto-Scaling]
+            [Availability Zones]
+        (Data)
+            [Replication]
+            [Backup]
+            [Disaster Recovery]
+            [Consistency Models]
+        (Application)
+            [Health Checks]
+            [Circuit Breakers]
+            [Retry Patterns]
+            [Monitoring]
+        (Network)
+            [Traffic Manager]
+            [Front Door]
+            [Load Balancer]
+            [Application Gateway]
+```
+
+High Availability (HA) is the ability of a system to remain operational and accessible even in the face of component failures. Here's a comprehensive guide to high availability design principles and their implementations, with a focus on Azure cloud services and tools:
 
 ## 1. Redundancy
 
@@ -10,30 +36,67 @@ High Availability (HA) is the ability of a system to remain operational and acce
 - Geographic distribution
 - Active-Active vs Active-Passive configurations
 
-### Implementation Example
-```yaml
-# Azure Load Balancer with multiple instances
-resource "azurerm_lb" "example" {
-  name                = "ha-loadbalancer"
-  location            = azurerm_resource_group.example.location
-  resource_group_name = azurerm_resource_group.example.name
-  sku                = "Standard"
-
-  frontend_ip_configuration {
-    name                 = "PublicIPAddress"
-    public_ip_address_id = azurerm_public_ip.example.id
+### Azure Implementation
+```bicep
+// Azure Load Balancer with multiple instances
+resource loadBalancer 'Microsoft.Network/loadBalancers@2021-05-01' = {
+  name: 'ha-loadbalancer'
+  location: resourceGroup().location
+  sku: {
+    name: 'Standard'
+    tier: 'Regional'
+  }
+  properties: {
+    frontendIPConfigurations: [
+      {
+        name: 'frontend'
+        properties: {
+          publicIPAddress: {
+            id: publicIP.id
+          }
+        }
+      }
+    ]
+    backendAddressPools: [
+      {
+        name: 'backend'
+      }
+    ]
+    probes: [
+      {
+        name: 'http-probe'
+        properties: {
+          protocol: 'Http'
+          port: 80
+          requestPath: '/health'
+          intervalInSeconds: 5
+          numberOfProbes: 2
+        }
+      }
+    ]
   }
 }
 
-# Multiple VM instances in availability set
-resource "azurerm_availability_set" "example" {
-  name                = "ha-aset"
-  location            = azurerm_resource_group.example.location
-  resource_group_name = azurerm_resource_group.example.name
-  platform_fault_domain_count  = 3
-  platform_update_domain_count = 5
+// Availability Set for VMs
+resource availabilitySet 'Microsoft.Compute/availabilitySets@2021-07-01' = {
+  name: 'ha-aset'
+  location: resourceGroup().location
+  sku: {
+    name: 'Aligned'
+  }
+  properties: {
+    platformFaultDomainCount: 3
+    platformUpdateDomainCount: 5
+  }
 }
 ```
+
+### Tools and Services
+- **Azure Availability Zones**: Physical and logical separation of resources
+- **Azure Availability Sets**: Fault domain and update domain separation
+- **Azure Site Recovery**: Cross-region replication and failover
+- **Azure Traffic Manager**: Global DNS-based load balancing
+- **Azure Front Door**: Global HTTP/HTTPS load balancing with WAF
 
 ## 2. Fault Detection and Recovery
 
@@ -181,414 +244,184 @@ const policy = new azure.recoveryservices.ReplicationPolicy("example-policy", {
 });
 ```
 
-## Disaster Recovery Patterns
+## Integration with System Design Patterns
+
+For detailed implementation of design patterns that support high availability, refer to the [System Design Principles and Patterns](System_Design_Principles_and_Patterns.md) document, specifically:
+
+- Circuit Breaker Pattern implementation for Azure Functions
+- Data Consistency Patterns with Cosmos DB
+- Monitoring Patterns with Application Insights
+- Azure-specific Pattern Selection Framework
+
+The patterns described in the System Design document complement the high availability implementations described here by providing:
+
+1. **Foundational Patterns**
+   - Circuit breaker implementations
+   - Retry strategies
+   - Bulkhead pattern
+   - Cache-aside pattern
+
+2. **Azure-Specific Implementations**
+   - VM Scale Set configurations
+   - Application Insights setup
+   - Cosmos DB multi-region deployments
+   - Azure Front Door configurations
+
+## Mission-Critical Workload Considerations
 
 ```mermaid
-graph TB
-    subgraph "DR Strategies"
-        direction TB
-        
-        subgraph "Active-Active"
-            R1[Region 1] <--> R2[Region 2]
-            LB[Global Load Balancer]
-            LB --> R1
-            LB --> R2
-        end
-        
-        subgraph "Active-Passive"
-            P1[Primary Region] -.->|Failover| P2[Secondary Region]
-            P1 -->|Sync| P2
-        end
-        
-        subgraph "Recovery Objectives"
-            RTO[Recovery Time Objective]
-            RPO[Recovery Point Objective]
-        end
-    end
+mindmap
+    root((Mission
+        Critical))
+        (Availability)
+            [Multi-Region Active/Active]
+            [Zero-Downtime Updates]
+            [Automated Recovery]
+        (Reliability)
+            [Chaos Engineering]
+            [Failure Mode Analysis]
+            [Recovery Automation]
+        (Performance)
+            [Global Distribution]
+            [Caching Strategy]
+            [Load Testing]
+        (Security)
+            [Zero Trust]
+            [Threat Detection]
+            [Compliance]
 ```
 
-## Failover Architecture
+### Design Principles for Mission-Critical Systems
 
-```mermaid
-sequenceDiagram
-    participant DNS as DNS Service
-    participant HCP as Health Check System
-    participant P as Primary Region
-    participant S as Secondary Region
-    participant Rep as Data Replication
+1. **Zero-Downtime Architecture**
+   - Active-active multi-region deployment
+   - Zero-downtime updates and maintenance
+   - Automated failover and recovery
+   - Real-time monitoring and alerting
+
+2. **Resiliency Requirements**
+   - RTO < 1 hour (typically minutes)
+   - RPO < 1 minute
+   - 99.99% or higher availability
+   - Geographic redundancy
+
+3. **Data Consistency**
+   - Multi-region write capability
+   - Strong consistency where required
+   - Conflict resolution strategies
+   - Data sovereignty compliance
+
+### Azure Service Level Agreements (SLAs)
+
+| Service | Tier | SLA | Requirements |
+|---------|------|-----|--------------|
+| Virtual Machines | Single Instance | 99.9% | Premium SSD/Ultra Disk |
+| Virtual Machines | Availability Set | 99.95% | 2+ instances |
+| Virtual Machines | Availability Zones | 99.99% | 2+ instances across zones |
+| App Service | Standard | 99.95% | Multiple instances |
+| App Service | Premium v3 | 99.99% | Zone redundant deployment |
+| Azure SQL Database | Business Critical | 99.995% | Zone redundant deployment |
+| Cosmos DB | Multi-region | 99.999% | Multi-region writes |
+| Azure Storage | ZRS | 99.9999999999% (11 9's) | Data durability |
+
+### Implementation Checklist for Mission-Critical Workloads
+
+```yaml
+# Example Azure Front Door Configuration for Global Distribution
+resource "azurerm_frontdoor" "example" {
+  name                = "mission-critical-frontend"
+  resource_group_name = azurerm_resource_group.example.name
+
+  routing_rule {
+    name               = "routing-rule"
+    accepted_protocols = ["Http", "Https"]
+    patterns_to_match  = ["/*"]
     
-    Note over P,S: Normal Operation
-    Rep->>Rep: Continuous Replication
-    HCP->>P: Health Check
+    frontend_endpoints = ["frontend-endpoint"]
     
-    alt Primary Failure
-        HCP->>P: Detect Failure
-        HCP->>DNS: Update DNS
-        DNS->>S: Route to Secondary
-        S->>S: Promote to Primary
-        Note over P,S: Failover Complete
-    end
-```
-
-## High Availability Components
-
-```mermaid
-graph TB
-    subgraph "HA Architecture"
-        direction TB
-        
-        GLB[Global Load Balancer] --> DC1[Data Center 1]
-        GLB --> DC2[Data Center 2]
-        
-        subgraph "Data Center 1"
-            LB1[Load Balancer] --> App1[App Servers]
-            App1 --> DB1[(Primary DB)]
-        end
-        
-        subgraph "Data Center 2"
-            LB2[Load Balancer] --> App2[App Servers]
-            App2 --> DB2[(Secondary DB)]
-        end
-        
-        DB1 -->|Replication| DB2
-    end
-```
-
-## Disaster Recovery Implementation
-
-```typescript
-interface FailoverConfig {
-    primaryRegion: string;
-    secondaryRegion: string;
-    healthCheckInterval: number;
-    failureThreshold: number;
-}
-
-class RegionalFailover {
-    private failures: number = 0;
-    private isFailedOver: boolean = false;
-
-    constructor(private config: FailoverConfig) {
-        this.startHealthChecks();
-    }
-
-    private async startHealthChecks(): Promise<void> {
-        setInterval(async () => {
-            try {
-                await this.checkPrimaryHealth();
-                this.failures = 0;
-                if (this.isFailedOver) {
-                    await this.failbackToPrimary();
-                }
-            } catch (error) {
-                this.failures++;
-                if (this.failures >= this.config.failureThreshold) {
-                    await this.failoverToSecondary();
-                }
-            }
-        }, this.config.healthCheckInterval);
-    }
-
-    private async failoverToSecondary(): Promise<void> {
-        if (this.isFailedOver) return;
-
-        // Implement failover logic:
-        // 1. Update DNS/Traffic Manager
-        // 2. Promote secondary to primary
-        // 3. Update application configurations
-        this.isFailedOver = true;
-    }
-
-    private async failbackToPrimary(): Promise<void> {
-        // Implement failback logic:
-        // 1. Verify primary is healthy
-        // 2. Sync any missed data
-        // 3. Switch traffic back
-        this.isFailedOver = false;
-    }
-}
-```
-
-## Data Replication Strategies
-
-```mermaid
-flowchart TB
-    subgraph "Replication Models"
-        direction TB
-        
-        subgraph "Synchronous"
-            S1[Write] --> S2[Primary DB]
-            S2 -->|Wait| S3[Secondary DB]
-            S3 -->|Confirm| S2
-            S2 -->|Complete| S1
-        end
-        
-        subgraph "Asynchronous"
-            A1[Write] --> A2[Primary DB]
-            A2 -->|Complete| A1
-            A2 -.->|Background| A3[Secondary DB]
-        end
-    end
-```
-
-## 6. Service Mesh Architecture
-
-### Principles
-- Service discovery
-- Network resilience
-- Traffic management
-- Observability
-
-### Implementation Example
-```yaml
-# Istio Service Mesh Configuration
-apiVersion: networking.istio.io/v1alpha3
-kind: VirtualService
-metadata:
-  name: reviews-route
-spec:
-  hosts:
-  - reviews.prod.svc.cluster.local
-  http:
-  - route:
-    - destination:
-        host: reviews.prod.svc.cluster.local
-        subset: v1
-      weight: 90
-    - destination:
-        host: reviews.prod.svc.cluster.local
-        subset: v2
-      weight: 10
-  retries:
-    attempts: 3
-    perTryTimeout: 2s
-    retryOn: gateway-error,connect-failure,refused-stream
-```
-
-## 7. Monitoring and Alerting
-
-### Principles
-- Real-time monitoring
-- Predictive analytics
-- Alert thresholds
-- Incident response
-
-### Implementation Example
-```yaml
-# Prometheus Alert Rules
-groups:
-- name: high-availability-alerts
-  rules:
-  - alert: InstanceDown
-    expr: up == 0
-    for: 5m
-    labels:
-      severity: critical
-    annotations:
-      summary: "Instance {{ $labels.instance }} down"
-      description: "{{ $labels.instance }} has been down for more than 5 minutes"
-
-  - alert: HighLatency
-    expr: http_request_duration_seconds{quantile="0.9"} > 1
-    for: 10m
-    labels:
-      severity: warning
-    annotations:
-      summary: "High latency on {{ $labels.instance }}"
-```
-
-## 8. Auto-Scaling
-
-### Principles
-- Horizontal scaling
-- Vertical scaling
-- Predictive scaling
-- Resource optimization
-
-### Implementation Example
-```yaml
-# Kubernetes Horizontal Pod Autoscaler
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: web-app
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: web-app
-  minReplicas: 3
-  maxReplicas: 10
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 80
-  behavior:
-    scaleDown:
-      stabilizationWindowSeconds: 300
-```
-
-## 9. Cross-Region Deployment
-
-### Principles
-- Geographic redundancy
-- Traffic routing
-- Data synchronization
-- Regional failover
-
-### Implementation Example
-```typescript
-// Azure Traffic Manager Configuration
-const trafficManager = new azure.network.TrafficManagerProfile("example", {
-    resourceGroupName: resourceGroup.name,
-    trafficManagerProfiles: {
-        relativeName: "ha-app",
-        trafficRoutingMethod: "Performance",
-        dnsConfig: {
-            relativeName: "ha-app",
-            ttl: 30
-        },
-        monitorConfig: {
-            protocol: "HTTPS",
-            port: 443,
-            path: "/health",
-            intervalInSeconds: 30,
-            timeoutInSeconds: 10,
-            toleratedNumberOfFailures: 3
-        },
-        endpoints: [
-            {
-                name: "primary",
-                type: "AzureEndpoints",
-                targetResourceId: primaryApp.id,
-                priority: 1
-            },
-            {
-                name: "secondary",
-                type: "AzureEndpoints",
-                targetResourceId: secondaryApp.id,
-                priority: 2
-            }
-        ]
-    }
-});
-```
-
-## 10. Security and Compliance
-
-### Principles
-- Identity and access management
-- Encryption at rest and in transit
-- Compliance requirements
-- Security monitoring
-
-### Implementation Example
-```yaml
-# Azure Key Vault Configuration
-resource "azurerm_key_vault" "example" {
-  name                       = "ha-keyvault"
-  location                   = azurerm_resource_group.example.location
-  resource_group_name        = azurerm_resource_group.example.name
-  tenant_id                  = data.azurerm_client_config.current.tenant_id
-  soft_delete_retention_days = 90
-  purge_protection_enabled   = true
-
-  sku_name = "standard"
-
-  network_acls {
-    default_action = "Deny"
-    bypass         = "AzureServices"
-    ip_rules       = ["trusted_ip_range"]
-  }
-}
-
-# Enable encryption for storage account
-resource "azurerm_storage_account" "example" {
-  name                     = "hastorageaccount"
-  resource_group_name      = azurerm_resource_group.example.name
-  location                 = azurerm_resource_group.example.location
-  account_tier             = "Standard"
-  account_replication_type = "GRS"
-
-  blob_properties {
-    versioning_enabled       = true
-    change_feed_enabled      = true
-    default_service_version  = "2020-06-12"
-    delete_retention_policy {
-      days = 30
+    forwarding_configuration {
+      forwarding_protocol = "MatchRequest"
+      backend_pool_name   = "backend-pool"
     }
   }
 
-  encryption_scopes {
-    enable_infrastructure_encryption = true
+  backend_pool {
+    name = "backend-pool"
+    
+    backend {
+      host_header      = "primary-region.azurewebsites.net"
+      address          = "primary-region.azurewebsites.net"
+      http_port        = 80
+      https_port       = 443
+      priority         = 1
+      weight          = 50
+    }
+    
+    backend {
+      host_header      = "secondary-region.azurewebsites.net"
+      address          = "secondary-region.azurewebsites.net"
+      http_port        = 80
+      https_port       = 443
+      priority         = 1
+      weight          = 50
+    }
+
+    load_balancing_name = "load-balancing-settings"
+    health_probe_name   = "health-probe"
   }
 }
 ```
 
-# High Availability Design Patterns
+### Monitoring Strategy for Mission-Critical Systems
+
+1. **Health Metrics**
+   - Service health status
+   - Resource utilization
+   - Performance metrics
+   - Error rates
+
+2. **Business Metrics**
+   - Transaction success rates
+   - Response times
+   - User experience metrics
+   - Business impact metrics
+
+3. **Compliance Monitoring**
+   - Security posture
+   - Compliance status
+   - Audit logs
+   - Access patterns
 
 ```mermaid
 graph TB
-    subgraph "High Availability Overview"
+    subgraph "Mission-Critical Monitoring"
         direction TB
         
-        subgraph "Load Balancing"
-            LB[Load Balancer]
-            S1[Server 1]
-            S2[Server 2]
-            S3[Server 3]
-            LB -->|Traffic| S1
-            LB -->|Traffic| S2
-            LB -->|Traffic| S3
+        AM[Azure Monitor] --> AI[Application Insights]
+        AM --> LA[Log Analytics]
+        AM --> M[Metrics]
+        
+        subgraph "Alerting"
+            A1[Health Alerts]
+            A2[Performance Alerts]
+            A3[Security Alerts]
         end
         
-        subgraph "Data Replication"
-            M[(Master DB)]
-            R1[(Replica 1)]
-            R2[(Replica 2)]
-            M -->|Sync| R1
-            M -->|Sync| R2
-        end
-        
-        subgraph "Failover"
-            A[Active Region]
-            P[Passive Region]
-            A -.->|Failover| P
-        end
+        AI --> A1
+        LA --> A2
+        M --> A3
     end
 ```
 
-## Active-Active vs Active-Passive
+## Cross-Region Deployment Patterns
 
 ```mermaid
-graph LR
-    subgraph "Active-Active"
-        direction LR
-        AA1[Region A] <-->|Live Traffic| AA2[Region B]
-    end
-    
-    subgraph "Active-Passive"
-        direction LR
-        AP1[Active Region] -.->|Failover| AP2[Standby Region]
-    end
-```
-
-## Availability Zones and Regions
-
-```mermaid
-flowchart TB
-    subgraph "Multi-Region Architecture"
-        subgraph "Region 1"
-            direction TB
+graph TB
+    subgraph "Azure Multi-Region Architecture"
+        direction TB
+        TM[Traffic Manager/Front Door]
+        
+        subgraph "Region 1 (Primary)"
             LB1[Load Balancer]
             AZ1[Zone 1]
             AZ2[Zone 2]
@@ -598,8 +431,7 @@ flowchart TB
             LB1 --> AZ3
         end
         
-        subgraph "Region 2"
-            direction TB
+        subgraph "Region 2 (Secondary)"
             LB2[Load Balancer]
             AZ4[Zone 1]
             AZ5[Zone 2]
@@ -609,10 +441,217 @@ flowchart TB
             LB2 --> AZ6
         end
         
-        DNS[Global DNS] --> LB1
-        DNS --> LB2
+        TM --> LB1
+        TM --> LB2
+        
+        subgraph "Data Replication"
+            DB1[(Primary DB)]
+            DB2[(Secondary DB)]
+            DB1 -->|Sync/Async| DB2
+        end
     end
 ```
+
+## Azure-Specific Availability Patterns
+
+### 1. Zone-to-Zone Disaster Recovery
+Suitable for scenarios where:
+- Metro disaster recovery strategy is needed
+- Complex networking infrastructure exists
+- Legal jurisdiction requires data to remain within region
+- Lower RPO is required due to reduced replication distance
+
+```mermaid
+graph TB
+    subgraph "Zone-to-Zone DR"
+        direction TB
+        
+        subgraph "Primary Zone"
+            PVM[Primary VMs]
+            PST[Primary Storage]
+        end
+        
+        subgraph "Secondary Zone"
+            SVM[Secondary VMs]
+            SST[Secondary Storage]
+        end
+        
+        PVM -->|Replication| SVM
+        PST -->|ZRS| SST
+        
+        ASR[Azure Site Recovery]
+        ASR -->|Orchestration| PVM
+        ASR -->|Orchestration| SVM
+    end
+```
+
+### 2. Regional High Availability
+For mission-critical workloads requiring maximum uptime:
+
+1. **Virtual Machine Scale Sets**
+   - Automatic VM distribution across zones
+   - Built-in auto-scaling capabilities
+   - Automated instance health management
+
+2. **Azure App Service**
+   - Zone redundancy in Premium v3 and above
+   - Auto-healing capabilities
+   - Built-in load balancing
+
+3. **Azure Storage**
+   - Zone-redundant storage (ZRS)
+   - Geo-redundant storage (GRS)
+   - Read-access geo-redundant storage (RA-GRS)
+
+### 3. Service-Specific HA Features
+
+```mermaid
+graph TB
+    subgraph "Azure HA Services"
+        direction TB
+        
+        subgraph "Compute"
+            VMSS[VM Scale Sets]
+            APP[App Service]
+            AKS[AKS]
+        end
+        
+        subgraph "Data"
+            SQL[Azure SQL]
+            COSMOS[Cosmos DB]
+            STORAGE[Storage]
+        end
+        
+        subgraph "Networking"
+            AFD[Front Door]
+            ATM[Traffic Manager]
+            ALB[Load Balancer]
+        end
+    end
+```
+
+#### Azure SQL Database
+- Built-in replication
+- Automatic failover groups
+- Zone-redundant deployments
+- Point-in-time recovery
+
+#### Cosmos DB
+- 99.999% SLA with multi-region writes
+- Automatic failover
+- Multiple consistency levels
+- Global distribution
+
+#### Azure Storage
+```yaml
+# Storage Account with ZRS and soft delete
+resource "azurerm_storage_account" "example" {
+  name                     = "hazrstorage"
+  resource_group_name      = azurerm_resource_group.example.name
+  location                 = azurerm_resource_group.example.location
+  account_tier             = "Standard"
+  account_replication_type = "ZRS"
+
+  blob_properties {
+    delete_retention_policy {
+      days = 7
+    }
+    container_delete_retention_policy {
+      days = 7
+    }
+    versioning_enabled = true
+  }
+}
+```
+
+### 4. Deployment Stamps Pattern
+Recommended for SaaS solutions to:
+- Isolate blast radius
+- Provide geographic independence
+- Enable independent scaling
+- Simplify management
+
+```mermaid
+graph TB
+    subgraph "Deployment Stamps"
+        direction TB
+        
+        DNS[Azure Front Door/Traffic Manager]
+        
+        subgraph "US Stamp"
+            US_APP[App Services]
+            US_DB[(Databases)]
+            US_STOR[Storage]
+        end
+        
+        subgraph "EU Stamp"
+            EU_APP[App Services]
+            EU_DB[(Databases)]
+            EU_STOR[Storage]
+        end
+        
+        DNS --> US_APP
+        DNS --> EU_APP
+    end
+```
+
+## Azure-Specific Best Practices
+
+1. **Authentication and Security**
+   - Use Managed Identities instead of connection strings/keys
+   - Store secrets in Azure Key Vault
+   - Implement proper RBAC with least privilege
+   - Enable encryption at rest and in transit
+
+2. **Monitoring and Diagnostics**
+   - Implement Azure Monitor for comprehensive monitoring
+   - Use Application Insights for application telemetry
+   - Set up Log Analytics for centralized logging
+   - Configure proper alerting thresholds
+
+3. **Data Management**
+   - Use geo-redundant storage for critical data
+   - Implement Azure Backup for regular backups
+   - Configure point-in-time recovery for databases
+   - Use Azure Site Recovery for DR
+
+4. **Network Design**
+   - Implement Azure Front Door for global load balancing
+   - Use Application Gateway for L7 load balancing
+   - Configure Network Security Groups properly
+   - Implement Azure DDoS Protection
+
+5. **Auto-Scaling**
+   - Use VM Scale Sets for IaaS workloads
+   - Configure App Service auto-scaling rules
+   - Implement AKS cluster auto-scaling
+   - Monitor and optimize scaling thresholds
+
+## Essential Azure Tools for HA Implementation
+
+1. **Infrastructure Management**
+   - Azure CLI/PowerShell
+   - Azure Resource Manager templates
+   - Bicep for infrastructure as code
+   - Azure DevOps for CI/CD
+
+2. **Monitoring and Analytics**
+   - Azure Monitor
+   - Application Insights
+   - Log Analytics
+   - Azure Service Health
+
+3. **Security and Compliance**
+   - Azure Key Vault
+   - Microsoft Defender for Cloud
+   - Azure Policy
+   - Azure RBAC
+
+4. **Disaster Recovery**
+   - Azure Site Recovery
+   - Azure Backup
+   - Azure Storage redundancy options
+   - Traffic Manager/Front Door
 
 ## High Availability Principles
 

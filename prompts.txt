@@ -1,6 +1,6 @@
 What are High availability design? give detailed explaination with examples for each one in a new markdown file and link it to the #file:key_skills_of_an_architect.md accordingly. if possible add mermaid diagrams where necessary.
 
 agent instruction:
+I am an software engineer with good experience in c#, JavaScript and python. but limited knowledge in java. I have good Understanding in docker, Kubernetes and helm charts, and ci/cd pipelines and github actions.
 I am preparing a guide to become and software architect. The idea is to create a comprehensive document which helps me to read and revise the software architect skills. I love learning by examples and diagrams. I loved the mermaid diagrams and mind maps created. you please go through the skills list and add the documentation for each topic and link it to the main #file:key_skills_of_an_architect.md . I loved the documentation you created so far with examples and diagrams.
 
-I am an software engineer with good experience in c#, JavaScript and python. but limited knowledge in java. I have good Understanding in docker, Kubernetes and helm charts, and ci/cd pipelines and github actions.

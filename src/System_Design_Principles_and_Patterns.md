@@ -550,3 +550,307 @@ graph TD
    * Maintenance considerations
 
 Remember: Patterns are solutions to common problems. Don't force them where they're not needed. Always consider the specific context and requirements of your system.
+
+## Azure Implementation Patterns
+
+For detailed implementation of Azure-specific high availability patterns and strategies, refer to the [High Availability Design](High_Availability_Design.md) document which covers:
+- Detailed Azure Service SLAs
+- Zone-to-Zone disaster recovery patterns
+- Regional high availability implementations
+- Azure-specific monitoring strategies
+
+```mermaid
+mindmap
+    root((Azure
+        Patterns))
+        (Compute)
+            [VM Scale Sets]
+            [App Service]
+            [AKS]
+            [Functions]
+        (Storage)
+            [Blob Storage]
+            [Managed Disks]
+            [File Storage]
+            [Queue Storage]
+        (Network)
+            [Front Door]
+            [Traffic Manager]
+            [Load Balancer]
+            [Application Gateway]
+        (Data)
+            [SQL Database]
+            [Cosmos DB]
+            [Cache for Redis]
+            [Storage Tables]
+```
+
+### 1. Scalability Patterns
+
+```bicep
+// VM Scale Set with Custom Scale Rules
+resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2021-07-01' = {
+  name: 'app-vmss'
+  location: location
+  sku: {
+    name: 'Standard_DS2_v2'
+    tier: 'Standard'
+    capacity: 2
+  }
+  properties: {
+    upgradePolicy: {
+      mode: 'Automatic'
+    }
+    automaticRepairsPolicy: {
+      enabled: true
+      gracePeriod: 'PT30M'
+    }
+    scaleInPolicy: {
+      rules: ['Default']
+    }
+  }
+}
+
+// Auto-scale Settings
+resource autoScaleSettings 'Microsoft.Insights/autoscalesettings@2021-05-01-preview' = {
+  name: 'auto-scale-config'
+  location: location
+  properties: {
+    targetResourceUri: vmss.id
+    enabled: true
+    profiles: [
+      {
+        name: 'Default'
+        capacity: {
+          minimum: '2'
+          maximum: '10'
+          default: '2'
+        }
+        rules: [
+          {
+            metricTrigger: {
+              metricName: 'Percentage CPU'
+              metricNamespace: 'microsoft.compute/virtualmachinescalesets'
+              metricResourceUri: vmss.id
+              timeGrain: 'PT1M'
+              statistic: 'Average'
+              timeWindow: 'PT10M'
+              timeAggregation: 'Average'
+              operator: 'GreaterThan'
+              threshold: 75
+            }
+            scaleAction: {
+              direction: 'Increase'
+              type: 'ChangeCount'
+              value: '1'
+              cooldown: 'PT5M'
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### 2. Reliability Patterns
+
+#### Circuit Breaker with Azure Functions
+
+```typescript
+import { AzureFunction, Context } from "@azure/functions";
+import { CircuitBreakerState, CircuitBreaker } from "./circuitBreaker";
+
+const circuitBreaker = new CircuitBreaker({
+    failureThreshold: 5,
+    resetTimeout: 60000,
+    monitorInterval: 10000
+});
+
+const httpTrigger: AzureFunction = async function (context: Context): Promise<void> {
+    try {
+        const result = await circuitBreaker.execute(async () => {
+            // Call downstream service
+            const response = await fetch("https://api.example.com/data");
+            if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+            return response.json();
+        });
+
+        context.res = {
+            status: 200,
+            body: result
+        };
+    } catch (error) {
+        if (error instanceof CircuitBreakerError) {
+            context.res = {
+                status: 503,
+                body: "Service temporarily unavailable"
+            };
+        } else {
+            context.res = {
+                status: 500,
+                body: "Internal server error"
+            };
+        }
+    }
+};
+```
+
+### 3. Data Consistency Patterns
+
+#### Cosmos DB Multi-Region Writes
+
+```typescript
+import { CosmosClient } from "@azure/cosmos";
+
+const client = new CosmosClient({
+    endpoint: process.env.COSMOS_ENDPOINT,
+    key: process.env.COSMOS_KEY,
+    connectionPolicy: {
+        preferredLocations: ["East US", "West US"]
+    }
+});
+
+async function performGlobalTransaction(): Promise<void> {
+    const container = client.database("mydb").container("orders");
+    
+    try {
+        const { resource: txnBatch } = await container.items.createTransaction();
+        
+        await txnBatch.createItem({
+            id: "order1",
+            type: "order",
+            region: "East US",
+            // ... other properties
+        });
+        
+        await txnBatch.createItem({
+            id: "inventory1",
+            type: "inventory",
+            region: "West US",
+            // ... other properties
+        });
+        
+        await txnBatch.commit();
+    } catch (error) {
+        // Handle transactional failures
+        console.error("Transaction failed:", error);
+        throw error;
+    }
+}
+```
+
+### 4. Monitoring Pattern
+
+```yaml
+# Application Insights Web Test
+resource "azurerm_application_insights_web_test" "example" {
+  name                    = "ha-webtest"
+  location               = azurerm_resource_group.example.location
+  resource_group_name    = azurerm_resource_group.example.name
+  application_insights_id = azurerm_application_insights.example.id
+  kind                   = "ping"
+  frequency              = 300
+  timeout                = 30
+  enabled                = true
+  geo_locations          = ["us-ca-sjc-azr", "us-tx-sn1-azr", "us-il-ch1-azr"]
+
+  configuration = <<XML
+<WebTest name="WebTest1" Enabled="True" Timeout="30" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+    <Items>
+        <Request Method="GET" Version="1.1" Url="https://www.myapp.com/health" ThinkTime="0" Timeout="30" ParseDependentRequests="True" FollowRedirects="True" />
+    </Items>
+    <ValidationRules>
+        <ValidationRule Classname="Microsoft.VisualStudio.TestTools.WebTesting.Rules.ValidationRuleFindText, Microsoft.VisualStudio.QualityTools.WebTestFramework, Version=10.0.0.0" DisplayName="Find Text">
+            <RuleParameters>
+                <RuleParameter Name="FindText" Value="healthy" />
+                <RuleParameter Name="IgnoreCase" Value="True" />
+                <RuleParameter Name="UseRegularExpression" Value="False" />
+                <RuleParameter Name="PassIfTextFound" Value="True" />
+            </RuleParameters>
+        </ValidationRule>
+    </ValidationRules>
+</WebTest>
+XML
+}
+```
+
+## Pattern Selection Framework
+
+When selecting patterns for Azure implementations, consider:
+
+1. **Service Level Requirements**
+   - Availability targets (99.9% to 99.999%)
+   - Recovery time objectives (RTO)
+   - Recovery point objectives (RPO)
+   - Geographic distribution needs
+
+2. **Operational Requirements**
+   - Monitoring and alerting needs
+   - Deployment frequency
+   - Maintenance windows
+   - Support requirements
+
+3. **Technical Constraints**
+   - Azure region availability
+   - Service limits and quotas
+   - Network latency requirements
+   - Data residency requirements
+
+4. **Cost Considerations**
+   - Service tier pricing
+   - Data transfer costs
+   - Redundancy costs
+   - Operational costs
+
+```mermaid
+flowchart TB
+    subgraph "Pattern Selection Process"
+        direction TB
+        
+        R[Requirements] --> C[Constraints]
+        C --> P[Patterns]
+        P --> I[Implementation]
+        I --> V[Validation]
+        
+        subgraph "Validation Criteria"
+            V1[Performance Tests]
+            V2[Load Tests]
+            V3[Chaos Tests]
+            V4[Cost Analysis]
+        end
+        
+        V --> V1
+        V --> V2
+        V --> V3
+        V --> V4
+    end
+```
+
+## Azure Implementation Best Practices
+
+1. **Security Integration**
+   - Use Managed Identities for authentication
+   - Implement proper RBAC
+   - Enable encryption at rest and in transit
+   - Use Azure Key Vault for secrets
+
+2. **Monitoring Implementation**
+   - Configure Application Insights
+   - Set up Log Analytics
+   - Implement custom metrics
+   - Create actionable alerts
+
+3. **Cost Optimization**
+   - Use appropriate service tiers
+   - Implement auto-scaling
+   - Monitor resource usage
+   - Optimize data transfer
+
+4. **Performance Tuning**
+   - Use caching effectively
+   - Implement CDN where appropriate
+   - Optimize database queries
+   - Monitor and adjust resource allocation
+
+Remember: Design patterns should be selected based on specific requirements and constraints. Always validate pattern implementations through testing and monitoring to ensure they meet the desired objectives.
