@@ -221,124 +221,23 @@ graph TB
 
 ## Decision Framework
 
-        subgraph "Shard 2"
-            S2[Server 2]
-            DB2[(Database 2)]
-        end
-        
-        subgraph "Shard 3"
-            S3[Server 3]
-            DB3[(Database 3)]
-        end
-        
-        LB --> S1
-        LB --> S2
-        LB --> S3
-    end
-```
+### Pattern Selection Criteria
+1. **Data Characteristics**
+   - Volume
+   - Velocity
+   - Variety
+   - Veracity
 
-Implementation Example:
-```typescript
-// Sharding manager with consistent hashing
-class ShardManager {
-    private shards: Map<string, DatabaseConnection>;
-    private hashRing: ConsistentHashRing;
+2. **Usage Patterns**
+   - Read/Write ratio
+   - Access patterns
+   - Query complexity
+   - Consistency needs
 
-    constructor(shardConfigs: ShardConfig[]) {
-        this.hashRing = new ConsistentHashRing();
-        
-        for (const config of shardConfigs) {
-            const connection = createConnection(config);
-            this.shards.set(config.id, connection);
-            this.hashRing.addNode(config.id);
-        }
-    }
+3. **Operational Requirements**
+   - Availability
+   - Scalability
+   - Maintenance
+   - Cost constraints
 
-    async executeQuery(shardKey: string, query: string): Promise<any> {
-        const shardId = this.hashRing.getNode(shardKey);
-        const shard = this.shards.get(shardId);
-        
-        return shard.execute(query);
-    }
-}
-```
-
-### 2. Multi-Region Replication
-
-```mermaid
-graph TB
-    subgraph "Multi-Region Architecture"
-        direction TB
-        
-        subgraph "Region 1"
-            P1[Primary]
-            S1[Secondary]
-        end
-        
-        subgraph "Region 2"
-            P2[Primary]
-            S2[Secondary]
-        end
-        
-        P1 -->|Sync| S2
-        P2 -->|Sync| S1
-    end
-```
-
-Implementation Example (using Azure Cosmos DB):
-```typescript
-import { CosmosClient } from "@azure/cosmos";
-
-class MultiRegionDatabase {
-    constructor(private client: CosmosClient) {}
-
-    async writeWithConsistency(
-        document: any,
-        writeRegion: string,
-        consistencyLevel: ConsistencyLevel
-    ): Promise<void> {
-        const container = this.client
-            .database('mydb')
-            .container('mycollection');
-
-        const options = {
-            consistencyLevel,
-            sessionToken: null
-        };
-
-        if (writeRegion) {
-            options.preferredLocations = [writeRegion];
-        }
-
-        await container.items.create(document, options);
-    }
-}
-```
-
-## Best Practices
-
-1. **Data Access Patterns**
-   - Use appropriate consistency levels
-   - Implement proper caching strategy
-   - Consider access patterns in schema design
-   - Use connection pooling
-
-2. **Data Distribution**
-   - Choose sharding key carefully
-   - Plan for data locality
-   - Implement proper backup strategy
-   - Monitor replication lag
-
-3. **Performance Optimization**
-   - Index strategically
-   - Use appropriate partitioning
-   - Monitor query performance
-   - Optimize data access patterns
-
-4. **Data Governance**
-   - Implement data validation
-   - Maintain data quality
-   - Apply security controls
-   - Monitor data usage
-
-Remember: Data architecture decisions have long-lasting implications for system performance, scalability, and maintenance. Choose patterns that align with your specific requirements while considering future growth.
+Remember: Data architecture should align with business needs while maintaining performance, security, and maintainability.

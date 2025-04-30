@@ -1,32 +1,5 @@
 # Network and Protocol Design
 
-```mermaid
-mindmap
-    root((Network &
-        Protocol
-        Design))
-        (Protocol Layers)
-            [Application]
-            [Transport]
-            [Network]
-            [Link]
-        (Communication)
-            [Synchronous]
-            [Asynchronous]
-            [Streaming]
-            [Batch]
-        (Security)
-            [Encryption]
-            [Authentication]
-            [Authorization]
-            [Integrity]
-        (Performance)
-            [Latency]
-            [Throughput]
-            [Reliability]
-            [Scalability]
-```
-
 ## Protocol Design Patterns
 
 ### 1. RESTful Protocol Design
@@ -38,9 +11,9 @@ graph TB
         
         subgraph "Key Principles"
             R[Resource-Based]
-            S[Stateless]
+            ST[Stateless]
             U[Uniform Interface]
-            C[Cacheable]
+            CA[Cacheable]
         end
         
         subgraph "Methods"
@@ -52,75 +25,25 @@ graph TB
     end
 ```
 
-Implementation Example:
-```typescript
-// RESTful API protocol implementation
-class RESTProtocol {
-    constructor(
-        private httpClient: HTTPClient,
-        private baseUrl: string,
-        private options: ProtocolOptions = {}
-    ) {}
+#### Design Principles
+1. **Resource Identification**
+   - URI structure
+   - Resource naming
+   - Relationship modeling
+   - Version strategy
 
-    async request<T>(
-        method: HTTPMethod,
-        resource: string,
-        options: RequestOptions = {}
-    ): Promise<T> {
-        const url = this.buildUrl(resource);
-        
-        // Add standard headers
-        const headers = {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            ...this.getAuthHeaders(),
-            ...options.headers
-        };
+2. **Method Selection**
+   - GET (Read)
+   - POST (Create)
+   - PUT (Update)
+   - DELETE (Remove)
+   - PATCH (Partial)
 
-        // Add idempotency key for unsafe methods
-        if (this.isUnsafeMethod(method)) {
-            headers['Idempotency-Key'] = 
-                options.idempotencyKey || uuidv4();
-        }
-
-        const response = await this.executeWithRetry(() =>
-            this.httpClient.request({
-                method,
-                url,
-                headers,
-                body: options.body ? JSON.stringify(options.body) : undefined,
-                timeout: options.timeout || this.options.defaultTimeout
-            })
-        );
-
-        return this.handleResponse<T>(response);
-    }
-
-    private async handleResponse<T>(
-        response: HTTPResponse
-    ): Promise<T> {
-        if (!response.ok) {
-            throw this.createError(response);
-        }
-
-        // Handle empty responses
-        if (response.status === 204) {
-            return undefined as T;
-        }
-
-        return response.json();
-    }
-
-    private createError(response: HTTPResponse): Error {
-        const error = new APIError(
-            `HTTP ${response.status}: ${response.statusText}`
-        );
-        error.status = response.status;
-        error.details = response.data;
-        return error;
-    }
-}
-```
+3. **Status Codes**
+   - 2xx (Success)
+   - 3xx (Redirection)
+   - 4xx (Client Error)
+   - 5xx (Server Error)
 
 ### 2. gRPC Protocol Design
 
@@ -138,67 +61,26 @@ graph LR
     end
 ```
 
-Implementation Example:
-```typescript
-// gRPC service implementation
-interface OrderService {
-    createOrder(request: CreateOrderRequest): Promise<Order>;
-    streamOrders(request: StreamOrdersRequest): Observable<Order>;
-}
+#### Communication Patterns
+1. **Unary RPC**
+   - Single request
+   - Single response
+   - Traditional RPC
 
-class OrderServiceImpl implements OrderService {
-    constructor(
-        private orderRepository: OrderRepository,
-        private validator: OrderValidator
-    ) {}
+2. **Server Streaming**
+   - Single request
+   - Multiple responses
+   - Real-time updates
 
-    async createOrder(
-        request: CreateOrderRequest
-    ): Promise<Order> {
-        // Validate request
-        await this.validator.validate(request);
+3. **Client Streaming**
+   - Multiple requests
+   - Single response
+   - Upload scenarios
 
-        // Create order with retry logic
-        const order = await this.executeWithRetry(() =>
-            this.orderRepository.create({
-                customerId: request.customerId,
-                items: request.items,
-                status: 'PENDING'
-            })
-        );
-
-        // Emit creation event
-        await this.eventEmitter.emit('order.created', order);
-
-        return order;
-    }
-
-    streamOrders(
-        request: StreamOrdersRequest
-    ): Observable<Order> {
-        return new Observable<Order>(observer => {
-            const query = this.buildQuery(request);
-            const stream = this.orderRepository
-                .watchOrders(query);
-
-            stream.on('data', (order: Order) => {
-                observer.next(order);
-            });
-
-            stream.on('error', (error: Error) => {
-                observer.error(error);
-            });
-
-            stream.on('end', () => {
-                observer.complete();
-            });
-
-            // Cleanup on unsubscribe
-            return () => stream.destroy();
-        });
-    }
-}
-```
+4. **Bidirectional**
+   - Multiple requests
+   - Multiple responses
+   - Chat/Gaming
 
 ### 3. WebSocket Protocol Design
 
@@ -212,92 +94,34 @@ graph TB
             FD[Full-Duplex]
             RP[Real-Time]
         end
+        
+        subgraph "Use Cases"
+            CH[Chat]
+            NT[Notifications]
+            GM[Gaming]
+            MT[Metrics]
+        end
     end
 ```
 
-Implementation Example:
-```typescript
-// WebSocket server implementation
-class WebSocketServer {
-    private readonly clients: Map<string, WebSocket>;
-    private readonly heartbeatInterval: number;
+#### Protocol Features
+1. **Connection Setup**
+   - HTTP upgrade
+   - Handshake process
+   - Protocol switch
+   - Connection maintain
 
-    constructor(
-        private readonly server: Server,
-        options: WebSocketOptions = {}
-    ) {
-        this.clients = new Map();
-        this.heartbeatInterval = options.heartbeatInterval || 30000;
-    }
+2. **Message Types**
+   - Text frames
+   - Binary frames
+   - Control frames
+   - Continuation frames
 
-    async start(): Promise<void> {
-        this.server.on('upgrade', (request, socket, head) => {
-            this.handleUpgrade(request, socket, head);
-        });
-
-        // Start heartbeat monitoring
-        setInterval(() => this.checkHeartbeats(), 
-            this.heartbeatInterval);
-    }
-
-    private handleUpgrade(
-        request: Request,
-        socket: Socket,
-        head: Buffer
-    ): void {
-        this.authenticateRequest(request)
-            .then(clientId => {
-                const ws = new WebSocket(request, socket, head);
-                this.setupWebSocket(clientId, ws);
-            })
-            .catch(error => {
-                socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
-                socket.destroy();
-            });
-    }
-
-    private setupWebSocket(
-        clientId: string,
-        ws: WebSocket
-    ): void {
-        this.clients.set(clientId, ws);
-
-        ws.on('message', async (data: WebSocket.Data) => {
-            try {
-                const message = JSON.parse(data.toString());
-                await this.handleMessage(clientId, message);
-            } catch (error) {
-                this.handleError(ws, error);
-            }
-        });
-
-        ws.on('close', () => {
-            this.clients.delete(clientId);
-        });
-
-        // Set up ping/pong
-        ws.on('pong', () => {
-            ws.isAlive = true;
-        });
-    }
-
-    private async handleMessage(
-        clientId: string,
-        message: WebSocketMessage
-    ): Promise<void> {
-        switch (message.type) {
-            case 'subscribe':
-                await this.handleSubscribe(clientId, message);
-                break;
-            case 'publish':
-                await this.handlePublish(clientId, message);
-                break;
-            default:
-                throw new UnknownMessageTypeError(message.type);
-        }
-    }
-}
-```
+3. **Connection Management**
+   - Heartbeat
+   - Ping/Pong
+   - Close frames
+   - Error handling
 
 ## Network Design Patterns
 
@@ -319,60 +143,12 @@ graph TB
     end
 ```
 
-Implementation Example:
-```typescript
-// Load balancer implementation
-class LoadBalancer {
-    private readonly servers: Server[];
-    private readonly healthChecks: Map<string, HealthCheck>;
-    private strategy: BalancingStrategy;
-
-    constructor(
-        servers: Server[],
-        strategy: BalancingStrategy = new RoundRobinStrategy()
-    ) {
-        this.servers = servers;
-        this.strategy = strategy;
-        this.healthChecks = new Map();
-        
-        this.setupHealthChecks();
-    }
-
-    async handleRequest(
-        request: Request
-    ): Promise<Response> {
-        // Get available servers
-        const availableServers = this.servers.filter(
-            server => this.isHealthy(server)
-        );
-
-        if (availableServers.length === 0) {
-            throw new NoAvailableServersError();
-        }
-
-        // Select server using strategy
-        const server = this.strategy.selectServer(
-            availableServers,
-            request
-        );
-
-        try {
-            return await server.handleRequest(request);
-        } catch (error) {
-            // Mark server as potentially unhealthy
-            await this.checkServerHealth(server);
-            throw error;
-        }
-    }
-
-    private async checkServerHealth(
-        server: Server
-    ): Promise<boolean> {
-        const healthCheck = this.healthChecks.get(server.id);
-        return healthCheck ? await healthCheck.check() : false;
-    }
-}
-```
+#### Algorithm Selection
+| Algorithm | Use Case | Pros | Cons |
+|-----------|----------|------|------|
+| Round Robin | General Purpose | Simple | No State Awareness |
+| Least Connections | Dynamic Loads | Better Balance | More Complex |
+| IP Hash | Session Affinity | Consistent | Possible Imbalance |
 
 ### 2. Service Discovery
 
@@ -391,85 +167,108 @@ graph TB
     end
 ```
 
-Implementation Example:
-```typescript
-// Service discovery implementation
-class ServiceRegistry {
-    private services: Map<string, ServiceInstance[]>;
-    private readonly ttl: number;
+#### Discovery Methods
+1. **Client-Side**
+   - Direct service lookup
+   - Local cache
+   - Health monitoring
+   - Load balancing
 
-    constructor(options: RegistryOptions = {}) {
-        this.services = new Map();
-        this.ttl = options.ttl || 30000;
-    }
+2. **Server-Side**
+   - Gateway/proxy based
+   - Central routing
+   - Health checks
+   - Service routing
 
-    async register(
-        service: ServiceInstance
-    ): Promise<void> {
-        const instances = this.services.get(service.name) || [];
-        instances.push({
-            ...service,
-            lastHeartbeat: Date.now()
-        });
+### 3. Network Security
 
-        this.services.set(service.name, instances);
-    }
-
-    async discover(
-        serviceName: string
-    ): Promise<ServiceInstance[]> {
-        const instances = this.services.get(serviceName) || [];
-        return instances.filter(instance => 
-            this.isInstanceHealthy(instance)
-        );
-    }
-
-    async deregister(
-        serviceId: string
-    ): Promise<void> {
-        for (const [name, instances] of this.services) {
-            const filtered = instances.filter(
-                instance => instance.id !== serviceId
-            );
-            if (filtered.length < instances.length) {
-                this.services.set(name, filtered);
-                break;
-            }
-        }
-    }
-
-    private isInstanceHealthy(
-        instance: ServiceInstance
-    ): boolean {
-        return Date.now() - instance.lastHeartbeat < this.ttl;
-    }
-}
+```mermaid
+graph TB
+    subgraph "Security Layers"
+        PE[Perimeter] --> N[Network]
+        N --> H[Host]
+        H --> A[Application]
+        
+        subgraph "Controls"
+            FW[Firewalls]
+            IDS[IDS/IPS]
+            WAF[WAF]
+            VPN[VPN]
+        end
+    end
 ```
 
-## Best Practices
+#### Security Components
+1. **Perimeter Security**
+   - Firewalls
+   - IDS/IPS
+   - DDoS protection
+   - Access control
 
-1. **Protocol Design**
-   - Define clear contracts
-   - Version your protocols
-   - Handle backward compatibility
-   - Document thoroughly
+2. **Network Segmentation**
+   - VLANs
+   - Subnets
+   - Security groups
+   - Network ACLs
 
-2. **Network Design**
-   - Plan for scalability
-   - Implement security
-   - Monitor performance
-   - Handle failures gracefully
+3. **Application Security**
+   - WAF
+   - SSL/TLS
+   - API security
+   - Authentication
 
-3. **Performance**
-   - Minimize latency
-   - Optimize throughput
-   - Use caching effectively
-   - Compress data
+## Protocol Best Practices
 
-4. **Security**
-   - Encrypt in transit
-   - Authenticate requests
-   - Validate input
-   - Monitor access
+### 1. Design Principles
+- Backward compatibility
+- Forward compatibility
+- Versioning strategy
+- Error handling
+- Rate limiting
 
-Remember: Network and protocol design decisions have long-lasting impacts on system performance, scalability, and maintainability. Choose protocols and patterns that align with your requirements while considering future growth and changes.
+### 2. Performance
+- Connection pooling
+- Keep-alive
+- Compression
+- Caching
+- Batching
+
+### 3. Security
+- Transport security
+- Authentication
+- Authorization
+- Auditing
+- Encryption
+
+## Network Architecture
+
+### 1. Topology Design
+```mermaid
+graph TB
+    subgraph "Network Architecture"
+        I[Internet] --> DMZ[DMZ]
+        DMZ --> App[App Layer]
+        App --> Data[Data Layer]
+        
+        subgraph "Zones"
+            PZ[Public]
+            AZ[App]
+            DZ[Data]
+        end
+    end
+```
+
+### 2. Connectivity Patterns
+1. **Hybrid Connectivity**
+   - VPN
+   - Direct connect
+   - Service endpoints
+   - Private links
+
+2. **Cloud Networking**
+   - Virtual networks
+   - Peering
+   - Transit gateway
+   - Load balancing
+
+Remember: Network and protocol design should prioritize security, performance, and reliability while maintaining simplicity where possible.
