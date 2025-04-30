@@ -94,353 +94,223 @@ class EventPublisher {
                 return;
             } catch (error) {
                 if (attempt === retryOptions.maxRetries) {
-                    throw error;
-                }
-                await this.delay(
-                    retryOptions.delay * 
-                    Math.pow(retryOptions.backoffCoefficient, attempt)
-                );
-                attempt++;
-            }
-        }
-    }
-}
-
-// Message subscriber with dead letter handling
-class EventSubscriber {
-    constructor(
-        private serviceBusClient: ServiceBusClient,
-        private topicName: string,
-        private subscriptionName: string
-    ) {}
-
-    async subscribe(
-        handler: (event: DomainEvent) => Promise<void>
-    ): Promise<void> {
-        const receiver = this.serviceBusClient.createReceiver(
-            this.topicName,
-            this.subscriptionName
-        );
-
-        receiver.subscribe({
-            processMessage: async (message) => {
-                try {
-                    await handler(message.body);
-                    await message.complete();
-                } catch (error) {
-                    if (this.isTransientError(error)) {
-                        await message.abandon();
-                    } else {
-                        await this.moveToDeadLetter(
-                            message,
-                            error.message
-                        );
-                    }
-                }
-            },
-            processError: async (error) => {
-                console.error('Error processing message:', error);
-            }
-        });
-    }
-
-    private async moveToDeadLetter(
-        message: ServiceBusMessage,
-        reason: string
-    ): Promise<void> {
-        await message.deadLetter({
-            deadLetterReason: reason,
-            deadLetterErrorDescription: reason
-        });
-    }
-}
-```
-
-### 2. Competing Consumers Pattern
-
-```mermaid
 graph TB
-    subgraph "Queue Processing"
-        Q[Queue] --> C1[Consumer 1]
-        Q --> C2[Consumer 2]
-        Q --> C3[Consumer 3]
+    subgraph "Message Components"
+        H[Header] --> M[Metadata]
+        M --> P[Payload]
+        P --> F[Footer]
         
-        subgraph "Load Balancing"
-            LB[Message Distribution]
+        subgraph "Attributes"
+            ID[Message ID]
+            TS[Timestamp]
+            COR[Correlation ID]
+            TTL[Time to Live]
         end
     end
 ```
 
-Implementation Example (using RabbitMQ):
-```typescript
-// Competing consumer implementation
-class WorkQueue {
-    constructor(
-        private channel: amqp.Channel,
-        private queueName: string
-    ) {}
+### 2. Message Properties
+1. **Required Properties**
+   - Message ID
+   - Timestamp
+   - Content type
+   - Content encoding
 
-    async processMessages(
-        processor: (msg: WorkItem) => Promise<void>,
-        concurrency: number
-    ): Promise<void> {
-        // Set up prefetch for fair dispatch
-        await this.channel.prefetch(concurrency);
+2. **Optional Properties**
+   - Correlation ID
+   - Reply to
+   - Expiration
+   - Priority
 
-        // Set up queue with dead letter exchange
-        await this.channel.assertQueue(this.queueName, {
-            durable: true,
-            arguments: {
-                'x-dead-letter-exchange': 'dlx',
-                'x-dead-letter-routing-key': `${this.queueName}.dlq`
-            }
-        });
+3. **Custom Headers**
+   - Business metadata
+   - Routing info
+   - Tracking data
+   - Version info
 
-        // Start consuming with multiple consumers
-        for (let i = 0; i < concurrency; i++) {
-            this.channel.consume(
-                this.queueName,
-                async (msg) => {
-                    if (!msg) return;
+## Reliability Patterns
 
-                    try {
-                        const workItem = JSON.parse(msg.content.toString());
-                        await processor(workItem);
-                        this.channel.ack(msg);
-                    } catch (error) {
-                        if (this.shouldRetry(error, msg)) {
-                            this.channel.nack(msg, false, true);
-                        } else {
-                            this.channel.reject(msg, false);
-                        }
-                    }
-                },
-                { noAck: false }
-            );
-        }
-    }
+### 1. Message Delivery
 
-    private shouldRetry(
-        error: Error,
-        msg: amqp.ConsumeMessage
-    ): boolean {
-        const retryCount = this.getRetryCount(msg);
-        return retryCount < 3 && this.isTransientError(error);
-    }
-
-    private getRetryCount(msg: amqp.ConsumeMessage): number {
-        const deaths = msg.properties.headers['x-death'] || [];
-        return deaths.reduce((count, death) => 
-            count + death.count, 0
-        );
-    }
-}
+```mermaid
+graph TB
+    subgraph "Delivery Guarantees"
+        AO[At-least-once] --> ACK[Acknowledgment]
+        MO[At-most-once] --> DLQ[Dead Letter]
+        EO[Exactly-once] --> DEDUP[Deduplication]
+        
+        subgraph "Features"
+            PERS[Persistence]
+            REPL[Replication]
+            TRAN[Transactions]
+        end
+    end
 ```
 
-### 3. Request/Reply Pattern
+#### Delivery Strategies
+| Strategy | Guarantee | Performance | Use Case |
+|----------|-----------|-------------|----------|
+| At-least-once | High | Medium | Critical Data |
+| At-most-once | Low | High | Metrics/Logs |
+| Exactly-once | Very High | Low | Transactions |
+
+### 2. Error Handling
 
 ```mermaid
 graph LR
-    subgraph "Request/Reply"
-        C[Client] --> |Request| RQ[Request Queue]
-        RQ --> S[Service]
-        S --> |Reply| RR[Reply Queue]
-        RR --> C
-    end
-```
-
-Implementation Example (using Apache Kafka):
-```typescript
-// Request/reply pattern with correlation
-class RequestReplyClient {
-    constructor(
-        private producer: kafka.Producer,
-        private consumer: kafka.Consumer,
-        private requestTopic: string,
-        private replyTopic: string
-    ) {}
-
-    async request<T, R>(
-        request: T,
-        timeout: number = 5000
-    ): Promise<R> {
-        const correlationId = uuidv4();
+    subgraph "Error Management"
+        F[Failure] --> R[Retry]
+        R --> D[DLQ]
+        D --> P[Process/Alert]
         
-        // Set up reply consumer before sending request
-        const replyPromise = this.awaitReply<R>(correlationId, timeout);
-
-        // Send request
-        await this.producer.send({
-            topic: this.requestTopic,
-            messages: [{
-                key: correlationId,
-                value: JSON.stringify(request),
-                headers: {
-                    correlationId,
-                    replyTo: this.replyTopic
-                }
-            }]
-        });
-
-        // Wait for reply
-        return replyPromise;
-    }
-
-    private awaitReply<R>(
-        correlationId: string,
-        timeout: number
-    ): Promise<R> {
-        return new Promise((resolve, reject) => {
-            const timeoutId = setTimeout(() => {
-                reject(new Error('Request timeout'));
-            }, timeout);
-
-            this.consumer.subscribe({
-                topic: this.replyTopic,
-                callback: (message) => {
-                    if (message.headers.correlationId === correlationId) {
-                        clearTimeout(timeoutId);
-                        resolve(JSON.parse(message.value.toString()));
-                    }
-                }
-            });
-        });
-    }
-}
-
-// Request/reply service implementation
-class RequestReplyService {
-    constructor(
-        private consumer: kafka.Consumer,
-        private producer: kafka.Producer,
-        private requestTopic: string,
-        private handler: (request: any) => Promise<any>
-    ) {}
-
-    async start(): Promise<void> {
-        await this.consumer.subscribe({
-            topic: this.requestTopic,
-            callback: async (message) => {
-                try {
-                    const request = JSON.parse(message.value.toString());
-                    const response = await this.handler(request);
-
-                    await this.producer.send({
-                        topic: message.headers.replyTo,
-                        messages: [{
-                            value: JSON.stringify(response),
-                            headers: {
-                                correlationId: message.headers.correlationId
-                            }
-                        }]
-                    });
-                } catch (error) {
-                    // Handle error response
-                    await this.sendErrorResponse(message, error);
-                }
-            }
-        });
-    }
-}
-```
-
-## High Availability Patterns
-
-### 1. Mirror Queue Pattern
-
-```mermaid
-graph TB
-    subgraph "HA Setup"
-        Q1[Primary Queue] --> |Mirror| Q2[Mirror 1]
-        Q1 --> |Mirror| Q3[Mirror 2]
-        
-        subgraph "Failover"
-            F[Failover Detection]
-            P[Promotion]
+        subgraph "Strategies"
+            EXP[Exponential Backoff]
+            MAX[Max Retries]
+            ALT[Alternative Route]
         end
     end
 ```
 
-Implementation Example:
-```typescript
-// High availability queue configuration
-class HAQueueManager {
-    constructor(
-        private brokerNodes: BrokerNode[],
-        private queueName: string
-    ) {}
+## Performance Optimization
 
-    async setupHAQueue(): Promise<void> {
-        // Set up queue with mirroring
-        const policy = {
-            pattern: this.queueName,
-            definition: {
-                'ha-mode': 'all',
-                'ha-sync-mode': 'automatic',
-                'ha-promote-on-failure': true
-            }
-        };
+### 1. Scaling Patterns
 
-        await this.applyHAPolicy(policy);
-        await this.setupHealthCheck();
-    }
-
-    private async setupHealthCheck(): Promise<void> {
-        const monitor = new QueueHealthMonitor(
-            this.brokerNodes,
-            this.queueName
-        );
-
-        monitor.onFailure(async (failedNode) => {
-            await this.handleNodeFailure(failedNode);
-        });
-
-        await monitor.start();
-    }
-
-    private async handleNodeFailure(
-        node: BrokerNode
-    ): Promise<void> {
-        // Promote mirror if primary fails
-        if (node.isPrimary) {
-            await this.promoteMirror();
-        }
-
-        // Notify operations
-        await this.notifyOperations({
-            event: 'NODE_FAILURE',
-            node: node.id,
-            queue: this.queueName,
-            timestamp: new Date()
-        });
-    }
-}
+```mermaid
+graph TB
+    subgraph "Scaling Architecture"
+        P[Partitioning] --> C[Clustering]
+        C --> R[Replication]
+        R --> L[Load Balancing]
+        
+        subgraph "Methods"
+            HP[Horizontal]
+            VP[Vertical]
+            GEO[Geographic]
+        end
+    end
 ```
 
-## Best Practices
+### 2. Performance Checklist
+- [ ] Message batching
+- [ ] Consumer scaling
+- [ ] Producer throttling
+- [ ] Connection pooling
+- [ ] Network optimization
+- [ ] Memory management
+- [ ] Disk I/O tuning
+- [ ] Monitoring setup
 
+## Monitoring Framework
+
+### 1. Key Metrics
+
+```mermaid
+graph TB
+    subgraph "Monitoring System"
+        T[Throughput] --> L[Latency]
+        L --> Q[Queue Length]
+        Q --> E[Errors]
+        
+        subgraph "Alerts"
+            QF[Queue Full]
+            DL[Dead Letter]
+            SL[SLA Breach]
+        end
+    end
+```
+
+### 2. Monitoring Checklist
+- [ ] Message rates
+- [ ] Queue depths
+- [ ] Consumer lag
+- [ ] Error rates
+- [ ] Resource usage
+- [ ] Network latency
+- [ ] Disk usage
+- [ ] Alert thresholds
+
+## Security Framework
+
+### 1. Security Architecture
+
+```mermaid
+graph TB
+    subgraph "Security Layers"
+        A[Authentication] --> Z[Authorization]
+        Z --> E[Encryption]
+        E --> A[Auditing]
+        
+        subgraph "Controls"
+            AC[Access Control]
+            TLS[Transport Security]
+            LOG[Logging]
+        end
+    end
+```
+
+### 2. Security Checklist
+- [ ] TLS configuration
+- [ ] Authentication setup
+- [ ] Authorization rules
+- [ ] Message encryption
+- [ ] Network security
+- [ ] Audit logging
+- [ ] Access controls
+- [ ] Compliance checks
+
+## Implementation Guidance
+
+### 1. Best Practices
 1. **Message Design**
-   - Use versioned schemas
-   - Include metadata
-   - Plan for backward compatibility
-   - Consider message size
+   - Schema versioning
+   - Backward compatibility
+   - Forward compatibility
+   - Message validation
 
 2. **Error Handling**
-   - Implement dead letter queues
-   - Use retry policies
-   - Handle poison messages
-   - Log failed messages
+   - Retry policies
+   - Dead letter queues
+   - Error logging
+   - Alert mechanisms
 
 3. **Performance**
-   - Configure prefetch counts
-   - Implement batching
-   - Monitor queue depths
-   - Scale consumers appropriately
+   - Connection pooling
+   - Message batching
+   - Prefetch settings
+   - Resource limits
 
-4. **Reliability**
-   - Use persistent messages
-   - Implement acknowledgments
-   - Set up high availability
-   - Monitor broker health
+### 2. Anti-patterns to Avoid
+- Direct broker-to-broker communication
+- Synchronous request-reply over queues
+- Large message payloads
+- Queue proliferation
+- Missing message TTL
+- Lack of monitoring
+- Insufficient security
+- No message schema
 
-Remember: Message broker architectures are crucial for building reliable, scalable distributed systems. Choose patterns and configurations that match your specific requirements for reliability, scalability, and message delivery guarantees.
+## Decision Framework
+
+### 1. Broker Selection
+| Feature | RabbitMQ | Kafka | Azure Service Bus |
+|---------|----------|-------|-------------------|
+| Patterns | All | Streaming | All |
+| Scale | Medium | Very High | High |
+| Latency | Very Low | Low | Low |
+| Features | Rich | Basic | Rich |
+| Management | Good | Complex | Excellent |
+
+### 2. Architecture Decisions
+1. **Message Flow**
+   - Routing patterns
+   - Exchange types
+   - Queue design
+   - Consumer groups
+
+2. **Infrastructure**
+   - High availability
+   - Disaster recovery
+   - Geographic distribution
+   - Resource sizing
+
+Remember: Message broker architectures should focus on reliability, scalability, and manageability while ensuring proper message delivery guarantees.
