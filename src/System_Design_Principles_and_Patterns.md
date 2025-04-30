@@ -1,5 +1,25 @@
 # System Design Principles and Patterns
 
+```mermaid
+mindmap
+    root((System Design
+        Principles))
+        (SOLID)
+            [Single Responsibility]
+            [Open-Closed]
+            [Liskov Substitution]
+            [Interface Segregation]
+            [Dependency Inversion]
+        (Design Patterns)
+            [Creational]
+            [Structural]
+            [Behavioral]
+        (Architecture)
+            [Modularity]
+            [Scalability]
+            [Maintainability]
+```
+
 ## Design Principles
 
 ### 1. SOLID Principles
@@ -287,6 +307,222 @@
       throw lastError;
   }
   ```
+
+## Design Patterns Overview
+
+```mermaid
+graph TB
+    subgraph "Core Design Patterns"
+        direction TB
+        
+        subgraph "Creational"
+            C1[Factory Method]
+            C2[Abstract Factory]
+            C3[Builder]
+            C4[Singleton]
+        end
+        
+        subgraph "Structural"
+            S1[Adapter]
+            S2[Bridge]
+            S3[Composite]
+            S4[Decorator]
+        end
+        
+        subgraph "Behavioral"
+            B1[Observer]
+            B2[Strategy]
+            B3[Command]
+            B4[State]
+        end
+    end
+```
+
+## Common Architecture Patterns
+
+```mermaid
+flowchart TB
+    subgraph "Architecture Patterns"
+        direction TB
+        
+        subgraph "Layered"
+            L1[Presentation] --> L2[Business]
+            L2 --> L3[Data Access]
+            L3 --> L4[Database]
+        end
+        
+        subgraph "Event-Driven"
+            E1[Producer] -->|Event| E2[Event Bus]
+            E2 -->|Event| E3[Consumer 1]
+            E2 -->|Event| E4[Consumer 2]
+        end
+        
+        subgraph "Microservices"
+            M1[API Gateway] --> M2[Service 1]
+            M1 --> M3[Service 2]
+            M1 --> M4[Service 3]
+        end
+    end
+```
+
+## Architectural Decision Framework
+
+```mermaid
+graph TB
+    subgraph "Decision Process"
+        direction TB
+        
+        R[Requirements] --> C[Constraints]
+        C --> T[Trade-offs]
+        T --> P[Patterns]
+        P --> D[Decision]
+        
+        subgraph "Considerations"
+            SC[Scalability]
+            RE[Reliability]
+            MA[Maintainability]
+            PE[Performance]
+            SE[Security]
+        end
+        
+        D --> SC
+        D --> RE
+        D --> MA
+        D --> PE
+        D --> SE
+    end
+```
+
+## System Quality Attributes
+
+```mermaid
+mindmap
+    root((System
+        Quality))
+        (Runtime)
+            [Performance]
+            [Security]
+            [Availability]
+            [Usability]
+        (Development)
+            [Maintainability]
+            [Testability]
+            [Modularity]
+        (Operation)
+            [Deployability]
+            [Monitorability]
+            [Supportability]
+        (Business)
+            [Cost]
+            [Time-to-Market]
+            [Flexibility]
+```
+
+## Component Interaction Patterns
+
+```mermaid
+flowchart TB
+    subgraph "Communication Patterns"
+        direction TB
+        
+        subgraph "Synchronous"
+            REST[REST API]
+            RPC[RPC]
+            GRPC[gRPC]
+        end
+        
+        subgraph "Asynchronous"
+            PUB[Pub/Sub]
+            EVT[Event-Driven]
+            MSG[Message Queue]
+        end
+        
+        subgraph "Hybrid"
+            WS[WebSocket]
+            SSE[Server-Sent Events]
+            GQL[GraphQL]
+        end
+    end
+```
+
+## System Design Process
+
+```mermaid
+sequenceDiagram
+    participant R as Requirements
+    participant C as Components
+    participant I as Integration
+    participant T as Testing
+    participant D as Deployment
+    
+    R->>C: Define Components
+    C->>I: Design Integration
+    I->>T: Develop Tests
+    T->>D: Plan Deployment
+    D-->>R: Feedback Loop
+    
+    Note over R,D: Iterative Development Cycle
+```
+
+## Architectural Decision Process
+
+```mermaid
+flowchart TB
+    subgraph "Decision Framework"
+        direction TB
+        
+        R[Requirements] --> C[Constraints]
+        C --> T[Trade-offs]
+        T --> D[Decision]
+        D --> V[Validation]
+        
+        subgraph "Factors"
+            F1[Performance]
+            F2[Scalability]
+            F3[Maintainability]
+            F4[Security]
+            F5[Cost]
+        end
+    end
+```
+
+## Architecture Quality Attributes
+
+```mermaid
+mindmap
+    root((Quality
+        Attributes))
+        (Runtime)
+            [Performance]
+            [Security]
+            [Availability]
+            [Usability]
+        (Development)
+            [Maintainability]
+            [Testability]
+            [Deployability]
+        (Business)
+            [Cost]
+            [Time to Market]
+            [Flexibility]
+```
+
+## Pattern Selection Guide
+
+```mermaid
+graph TD
+    subgraph "Pattern Selection"
+        direction TB
+        
+        P[Problem] --> A{Analyze Requirements}
+        A --> B{Consider Constraints}
+        B --> C{Evaluate Patterns}
+        C --> D{Compare Trade-offs}
+        D --> E[Select Pattern]
+        E --> F[Validate Choice]
+        F --> G[Document Decision]
+    end
+```
 
 ## Best Practices for Implementation
 

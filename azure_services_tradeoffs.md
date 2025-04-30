@@ -1,8 +1,63 @@
 # Azure Service Trade-offs
 
-This document outlines common Azure services and their respective trade-offs to aid in architectural decision-making.
+```mermaid
+flowchart TB
+    subgraph "Service Selection Framework"
+        direction TB
+        
+        Requirements[Business Requirements] --> Constraints[Technical Constraints]
+        Constraints --> Tradeoffs[Service Trade-offs]
+        Tradeoffs --> Decision[Service Selection]
+        
+        subgraph "Key Factors"
+            Cost[Cost]
+            Scale[Scalability]
+            Manage[Manageability]
+            Secure[Security]
+            Perform[Performance]
+        end
+    end
+```
+
+```mermaid
+graph TD
+    A[Azure Services] --> B[Messaging & Eventing]
+    A --> C[Compute]
+    A --> D[Storage]
+    A --> E[Databases]
+    A --> F[Specialty Services]
+    
+    B --> B1[Service Bus]
+    B --> B2[Event Grid]
+    B --> B3[Queue Storage]
+    
+    C --> C1[VMs]
+    C --> C2[App Service]
+    C --> C3[Functions]
+    
+    D --> D1[Blob Storage]
+    D --> D2[Azure Files]
+    D --> D3[Azure Disks]
+    
+    E --> E1[SQL Database]
+    E --> E2[Cosmos DB]
+    
+    F --> F1[Logic Apps]
+    F --> F2[AKS]
+```
+
+This document outlines trade-offs between various Azure services.  It's a living document and subject to change as Azure evolves.  "Trade-off" means understanding that choosing one service means potentially sacrificing benefits offered by another. Consider your specific requirements (scale, cost, latency, reliability, complexity) to guide your decisions.
 
 ## 1. Messaging: Event Grid vs. Service Bus
+
+```mermaid
+flowchart LR
+    subgraph "Service Characteristics"
+        SB[Service Bus] --> |High Reliability<br/>Complex Routing<br/>Higher Cost| M((Messaging<br/>Choice))
+        EG[Event Grid] --> |Low Latency<br/>Simple Events<br/>Lower Cost| M
+        QS[Queue Storage] --> |Basic Queuing<br/>Lowest Cost| M
+    end
+```
 
 - **Event Grid:**
   - **Use Cases:** Reactive architectures, event-driven microservices, IoT scenarios requiring high throughput and low latency. Ideal for delivering events to multiple subscribers.
@@ -12,7 +67,42 @@ This document outlines common Azure services and their respective trade-offs to 
   - **Use Cases:** Reliable asynchronous messaging, guaranteed delivery, complex routing, transaction support. Suitable for critical business processes.
   - **Trade-offs:** Higher latency compared to Event Grid. More expensive than Event Grid.
 
+## Messaging Service Comparison
+
+```mermaid
+quadrantChart
+    title Messaging Services Comparison
+    x-axis Low Cost --> High Cost
+    y-axis Low Complexity --> High Complexity
+    quadrant-1 High Cost, High Complexity
+    quadrant-2 Low Cost, High Complexity
+    quadrant-3 Low Cost, Low Complexity
+    quadrant-4 High Cost, Low Complexity
+    Service Bus: [0.8, 0.9]
+    Event Grid: [0.3, 0.4]
+    Queue Storage: [0.2, 0.2]
+```
+
 ## 2. Compute: Virtual Machines vs. Azure Functions vs. Azure Container Instances
+
+```mermaid
+graph TD
+    subgraph "Compute Trade-offs"
+        direction LR
+        A[Compute Options] --> B[Virtual Machines]
+        A --> C[Azure Functions]
+        A --> D[Container Instances]
+        
+        B --> B1[Full Control<br/>Custom Software<br/>Legacy Apps]
+        B --> B2[Higher Cost<br/>More Management<br/>Slower Scaling]
+        
+        C --> C1[Event-Driven<br/>Serverless<br/>Auto-Scaling]
+        C --> C2[Time Limits<br/>Cold Starts<br/>Limited Runtime]
+        
+        D --> D1[Fast Startup<br/>Per-Second Billing<br/>Simple Deploy]
+        D --> D2[Limited Orchestration<br/>No Auto-Scaling<br/>Regional Scope]
+    end
+```
 
 - **Virtual Machines (VMs):**
   - **Use Cases:** Full control over the operating system and environment. Legacy applications, custom configurations.
@@ -25,6 +115,28 @@ This document outlines common Azure services and their respective trade-offs to 
 - **Azure Container Instances (ACI):**
   - **Use Cases:** Running containers without managing VMs. Suitable for burst workloads and isolated tasks.
   - **Trade-offs:** Limited orchestration capabilities compared to Azure Kubernetes Service (AKS).
+
+## Compute Service Selection
+
+```mermaid
+graph TD
+    subgraph "Compute Decision Flow"
+        Start[Need Compute] --> Q1{Full Control?}
+        Q1 -->|Yes| VM[Virtual Machines]
+        Q1 -->|No| Q2{Containers?}
+        Q2 -->|Yes| Q3{Orchestration?}
+        Q3 -->|Yes| AKS[AKS]
+        Q3 -->|No| ACI[Container Instances]
+        Q2 -->|No| Q4{Event-Driven?}
+        Q4 -->|Yes| Func[Functions]
+        Q4 -->|No| App[App Service]
+        
+        subgraph "Cost vs Control"
+            VM -->|High| Cost1[High Cost/Control]
+            Func -->|Low| Cost2[Low Cost/Control]
+        end
+    end
+```
 
 ## 3. Storage: Blob Storage vs. Azure Files vs. Azure Disks
 
@@ -41,6 +153,20 @@ This document outlines common Azure services and their respective trade-offs to 
   - **Trade-offs:** Limited scalability compared to Blob Storage.
 
 ## 4. Databases: Azure SQL Database vs. Cosmos DB vs. Azure Table Storage
+
+```mermaid
+quadrantChart
+    title Database Service Trade-offs
+    x-axis Low Cost --> High Cost
+    y-axis Low Flexibility --> High Flexibility
+    quadrant-1 High Cost, High Flexibility
+    quadrant-2 Low Cost, High Flexibility
+    quadrant-3 Low Cost, Low Flexibility
+    quadrant-4 High Cost, Low Flexibility
+    Cosmos DB: [0.8, 0.9]
+    Azure SQL: [0.7, 0.6]
+    Table Storage: [0.2, 0.3]
+```
 
 - **Azure SQL Database:**
   - **Use Cases:** Relational database with advanced querying capabilities. Suitable for OLTP and OLAP workloads.
@@ -67,6 +193,28 @@ This document outlines common Azure services and their respective trade-offs to 
 - **Traffic Manager:**
   - **Use Cases:** DNS-based traffic routing. Ideal for multi-region failover and load balancing.
   - **Trade-offs:** Slower failover compared to Front Door.
+
+## Monitoring & Security Architecture
+
+```mermaid
+graph TD
+    subgraph "Monitoring Stack"
+        AM[Azure Monitor] --> LA[Log Analytics]
+        AM --> AI[Application Insights]
+        LA --> Q[KQL Queries]
+        AI --> APM[App Performance]
+        AI --> UM[User Monitoring]
+        AI --> E[Exceptions]
+    end
+
+    subgraph "Security Stack"
+        AD[Azure AD] --> MI[Managed Identities]
+        AD --> RBAC[Role Based Access]
+        KV[Key Vault] --> S[Secrets]
+        KV --> C[Certificates]
+        KV --> K[Keys]
+    end
+```
 
 ## 6. Monitoring: Azure Monitor vs. Log Analytics vs. Application Insights
 

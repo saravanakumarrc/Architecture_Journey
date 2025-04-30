@@ -1,6 +1,23 @@
 # Concurrency and Parallelism Concepts
 
-This guide covers the fundamental concepts of concurrency and parallelism in software systems, along with practical implementations and best practices.
+```mermaid
+graph TB
+    subgraph "Core Concepts"
+        direction TB
+        
+        subgraph "Concurrency"
+            C1[Thread 1] -.->|Context Switch| C2[Thread 2]
+            C2 -.->|Context Switch| C1
+        end
+        
+        subgraph "Parallelism"
+            P1[Core 1]
+            P2[Core 2]
+            P1 -->|Execute| T1[Task 1]
+            P2 -->|Execute| T2[Task 2]
+        end
+    end
+```
 
 ## 1. Concurrency vs. Parallelism
 
@@ -59,6 +76,21 @@ if __name__ == '__main__':
 
 ## 2. Threading Models
 
+```mermaid
+sequenceDiagram
+    participant M as Main Thread
+    participant W1 as Worker 1 
+    participant W2 as Worker 2
+    participant Q as Task Queue
+    
+    M->>Q: Submit Task
+    Q->>W1: Assign Task
+    M->>Q: Submit Task
+    Q->>W2: Assign Task
+    W1-->>M: Complete Task
+    W2-->>M: Complete Task
+```
+
 ### Concepts
 - Single-threaded
 - Multi-threaded
@@ -110,6 +142,15 @@ public class ThreadPoolExample {
 ```
 
 ## 3. Synchronization Mechanisms
+
+```mermaid
+stateDiagram-v2
+    [*] --> Unlocked
+    Unlocked --> Locked: Thread A acquires
+    Locked --> Unlocked: Thread A releases
+    Locked --> Waiting: Thread B attempts
+    Waiting --> Unlocked: Thread A releases
+```
 
 ### Types
 - Mutex
@@ -571,6 +612,57 @@ public void testConcurrentAccess() throws InterruptedException {
     
     assertEquals(threadCount * iterationCount, counter.getCount());
 }
+```
+
+## Thread Communication Patterns
+
+```mermaid
+sequenceDiagram
+    participant P as Producer Thread
+    participant Q as Queue
+    participant C1 as Consumer 1
+    participant C2 as Consumer 2
+    
+    P->>Q: Enqueue Item 1
+    P->>Q: Enqueue Item 2
+    C1->>Q: Dequeue Item 1
+    C2->>Q: Dequeue Item 2
+    
+    Note over P,C2: Producer-Consumer Pattern
+```
+
+## Thread States and Transitions
+
+```mermaid
+stateDiagram-v2
+    [*] --> New: Thread Creation
+    New --> Ready: Thread.start()
+    Ready --> Running: Scheduler Selects
+    Running --> Blocked: I/O or Lock Wait
+    Running --> Ready: Time Slice End
+    Blocked --> Ready: I/O Complete/Lock Available
+    Running --> [*]: Thread Complete
+    
+    note right of Running
+        Active Execution State
+    end note
+```
+
+## Synchronization Mechanisms
+
+```mermaid
+graph TD
+    subgraph "Sync Primitives"
+        M[Mutex] --> L[Lock]
+        L --> EL[Exclusive Lock]
+        L --> SL[Shared Lock]
+        
+        S[Semaphore] --> BS[Binary Semaphore]
+        S --> CS[Counting Semaphore]
+        
+        B[Barrier] --> CB[Cyclic Barrier]
+        B --> PB[Phaser Barrier]
+    end
 ```
 
 ## Best Practices for Concurrency and Parallelism

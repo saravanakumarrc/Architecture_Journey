@@ -1,5 +1,76 @@
 # Distributed Systems Concepts
 
+```mermaid
+graph TB
+    subgraph "Key Concepts Overview"
+        direction TB
+        
+        subgraph "CAP Theorem"
+            C[Consistency]
+            A[Availability]
+            P[Partition Tolerance]
+            C --- A
+            A --- P
+            P --- C
+        end
+        
+        subgraph "Consensus"
+            L[Leader]
+            F1[Follower 1]
+            F2[Follower 2]
+            F3[Follower 3]
+            L -->|Replicate| F1
+            L -->|Replicate| F2
+            L -->|Replicate| F3
+        end
+        
+        subgraph "Scalability"
+            HS[Horizontal Scaling]
+            VS[Vertical Scaling]
+            LB[Load Balancer]
+            LB -->|Route| HS
+            LB -->|Route| VS
+        end
+    end
+```
+
+## Distributed System Types
+
+```mermaid
+mindmap
+    root((Distributed
+        Systems))
+        (Client-Server)
+            [Web Applications]
+            [Cloud Services]
+            [Databases]
+        (Peer-to-Peer)
+            [File Sharing]
+            [Blockchain]
+            [Mesh Networks]
+        (Hybrid)
+            [CDNs]
+            [Gaming]
+            [IoT]
+```
+
+## Consistency Models
+
+```mermaid
+graph LR
+    subgraph "Consistency Spectrum"
+        direction LR
+        S[Strong] -->|Latency Cost| E[Eventual]
+        E -->|Lower Consistency| C[Causal]
+        
+        subgraph "Trade-offs"
+            T1[High Consistency]---|vs|T2[High Availability]
+        end
+    end
+```
+
+# Distributed Systems Concepts
+
 A distributed system is a collection of independent components located on different networked computers that work together as a single coherent system. Here's a comprehensive guide to distributed systems concepts:
 
 ## 1. Fundamental Concepts

@@ -1,6 +1,35 @@
 # Software Architecture Patterns
 
-Software architecture patterns are reusable solutions to common problems in software architecture. They provide a template for solving issues that can occur across different software development projects. Here's a detailed look at the most important patterns:
+## Common Architecture Patterns
+
+```mermaid
+graph TB
+    subgraph "Core Architecture Patterns"
+        direction TB
+        
+        subgraph "Layered"
+            L1[Presentation Layer]-->L2[Business Layer]
+            L2-->L3[Data Layer]
+        end
+        
+        subgraph "Microservices"
+            M1[Service 1]
+            M2[Service 2]
+            M3[Service 3]
+            M4[API Gateway]
+            M4-->M1
+            M4-->M2
+            M4-->M3
+        end
+        
+        subgraph "Event-Driven"
+            E1[Producer 1]-->|Event|B[Event Bus]
+            E2[Producer 2]-->|Event|B
+            B-->C1[Consumer 1]
+            B-->C2[Consumer 2]
+        end
+    end
+```
 
 ## 1. Layered (N-tier) Architecture
 ### Overview
@@ -18,14 +47,19 @@ A layered architecture divides the application into distinct horizontal layers, 
 - Working with standard CRUD applications
 
 ### Example
-```
-Web UI Layer
-    ↓
-Business Logic Layer
-    ↓
-Data Access Layer
-    ↓
-Database
+
+```mermaid
+flowchart TB
+    subgraph "Layered Architecture Details"
+        P[Presentation Layer]
+        B[Business Layer]
+        D[Data Access Layer]
+        DB[(Database)]
+        
+        P -->|"Request/Response"| B
+        B -->|"Business Logic"| D
+        D -->|"CRUD Operations"| DB
+    end
 ```
 
 ### Pros

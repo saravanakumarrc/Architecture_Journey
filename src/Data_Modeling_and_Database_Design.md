@@ -1,6 +1,22 @@
 # Data Modeling and Database Design
 
-Data modeling and database design are fundamental concepts in software architecture that focus on how data is organized, stored, and accessed within a system. This guide covers key concepts, best practices, and examples.
+```mermaid
+mindmap
+    root((Database
+        Design))
+        (Relational)
+            [Normalization]
+            [Indexes]
+            [Constraints]
+        (NoSQL)
+            [Document]
+            [Key-Value]
+            [Graph]
+        (Patterns)
+            [Sharding]
+            [Replication]
+            [Caching]
+```
 
 ## Data Modeling Concepts
 
@@ -224,6 +240,246 @@ graph TD
     A --> D[Product Media<br>images, videos]
 ```
 
+## Database Patterns
+
+```mermaid
+graph TB
+    subgraph "Data Storage Patterns"
+        direction TB
+        
+        subgraph "RDBMS Patterns"
+            N1[1NF]
+            N2[2NF]
+            N3[3NF]
+            N1 --> N2
+            N2 --> N3
+        end
+        
+        subgraph "NoSQL Patterns"
+            D[Denormalization]
+            E[Embedding]
+            R[Referencing]
+            D --- E
+            E --- R
+        end
+        
+        subgraph "Hybrid Patterns"
+            P[Polyglot Persistence]
+            C[CQRS]
+            ES[Event Sourcing]
+        end
+    end
+```
+
+## Data Access Patterns
+
+```mermaid
+sequenceDiagram
+    participant A as Application
+    participant C as Cache
+    participant DB as Database
+    participant R as Replica
+    
+    A->>C: Check Cache
+    alt Cache Hit
+        C-->>A: Return Data
+    else Cache Miss
+        C->>DB: Read Data
+        DB-->>C: Return Data
+        C-->>A: Return Data
+    end
+    
+    DB->>R: Replicate Changes
+```
+
+## Implementation Examples
+
+### 1. Repository Pattern
+
+```typescript
+interface Repository<T> {
+    findById(id: string): Promise<T | null>;
+    findAll(criteria: FilterCriteria): Promise<T[]>;
+    create(entity: T): Promise<T>;
+    update(id: string, entity: Partial<T>): Promise<T>;
+    delete(id: string): Promise<void>;
+}
+
+class UserRepository implements Repository<User> {
+    constructor(
+        private db: Database,
+        private cache: Cache
+    ) {}
+
+    async findById(id: string): Promise<User | null> {
+        // Check cache first
+        const cached = await this.cache.get(`user:${id}`);
+        if (cached) return JSON.parse(cached);
+
+        // Query database
+        const user = await this.db.query(
+            'SELECT * FROM users WHERE id = ?',
+            [id]
+        );
+
+        // Cache result
+        if (user) {
+            await this.cache.set(
+                `user:${id}`,
+                JSON.stringify(user),
+                { ttl: 3600 }
+            );
+        }
+
+        return user;
+    }
+
+    async create(user: User): Promise<User> {
+        const result = await this.db.query(
+            'INSERT INTO users (name, email) VALUES (?, ?)',
+            [user.name, user.email]
+        );
+
+        // Invalidate cache
+        await this.cache.delete(`user:${result.id}`);
+
+        return { ...user, id: result.id };
+    }
+}
+```
+
+### 2. Query Builder Pattern
+
+```typescript
+class QueryBuilder {
+    private conditions: string[] = [];
+    private params: any[] = [];
+    private sorts: string[] = [];
+    private limitValue?: number;
+    private offsetValue?: number;
+
+    where(field: string, operator: string, value: any): this {
+        this.conditions.push(`${field} ${operator} ?`);
+        this.params.push(value);
+        return this;
+    }
+
+    orderBy(field: string, direction: 'ASC' | 'DESC'): this {
+        this.sorts.push(`${field} ${direction}`);
+        return this;
+    }
+
+    limit(value: number): this {
+        this.limitValue = value;
+        return this;
+    }
+
+    offset(value: number): this {
+        this.offsetValue = value;
+        return this;
+    }
+
+    build(): { sql: string; params: any[] } {
+        let sql = 'SELECT * FROM users';
+
+        if (this.conditions.length) {
+            sql += ` WHERE ${this.conditions.join(' AND ')}`;
+        }
+
+        if (this.sorts.length) {
+            sql += ` ORDER BY ${this.sorts.join(', ')}`;
+        }
+
+        if (this.limitValue !== undefined) {
+            sql += ` LIMIT ${this.limitValue}`;
+        }
+
+        if (this.offsetValue !== undefined) {
+            sql += ` OFFSET ${this.offsetValue}`;
+        }
+
+        return { sql, params: this.params };
+    }
+}
+```
+
+### 3. Unit of Work Pattern
+
+```typescript
+class UnitOfWork {
+    private transactions: Transaction[] = [];
+
+    async begin(): Promise<void> {
+        const transaction = await this.db.beginTransaction();
+        this.transactions.push(transaction);
+    }
+
+    async commit(): Promise<void> {
+        const transaction = this.transactions.pop();
+        if (!transaction) {
+            throw new Error('No active transaction');
+        }
+        await transaction.commit();
+    }
+
+    async rollback(): Promise<void> {
+        const transaction = this.transactions.pop();
+        if (!transaction) {
+            throw new Error('No active transaction');
+        }
+        await transaction.rollback();
+    }
+
+    async execute<T>(work: () => Promise<T>): Promise<T> {
+        await this.begin();
+        try {
+            const result = await work();
+            await this.commit();
+            return result;
+        } catch (error) {
+            await this.rollback();
+            throw error;
+        }
+    }
+}
+```
+
+## Data Model Visualization
+
+```mermaid
+erDiagram
+    USER ||--o{ ORDER : places
+    USER {
+        string id
+        string name
+        string email
+        datetime created_at
+    }
+    ORDER ||--|{ ORDER_ITEM : contains
+    ORDER {
+        string id
+        string user_id
+        decimal total
+        string status
+        datetime created_at
+    }
+    ORDER_ITEM {
+        string id
+        string order_id
+        string product_id
+        integer quantity
+        decimal price
+    }
+    PRODUCT ||--o{ ORDER_ITEM : references
+    PRODUCT {
+        string id
+        string name
+        string description
+        decimal price
+        integer stock
+    }
+```
+
 ## Best Practices
 
 1. **Use Appropriate Data Types**
@@ -289,6 +545,34 @@ graph TD
 
 ## Database Types and Use Cases
 
+```mermaid
+graph TB
+    subgraph "Database Categories"
+        direction TB
+        
+        subgraph "Relational"
+            R1[PostgreSQL]
+            R2[MySQL]
+            R3[SQL Server]
+        end
+        
+        subgraph "Document"
+            D1[MongoDB]
+            D2[CouchDB]
+        end
+        
+        subgraph "Key-Value"
+            K1[Redis]
+            K2[DynamoDB]
+        end
+        
+        subgraph "Graph"
+            G1[Neo4j]
+            G2[ArangoDB]
+        end
+    end
+```
+
 ### 1. Relational Databases (RDBMS)
 - PostgreSQL
 - MySQL
@@ -320,6 +604,35 @@ Best for: Highly connected data (social networks, recommendation engines)
 - TimescaleDB
 
 Best for: Time-series data, monitoring, IoT applications
+
+## Data Relationships
+
+```mermaid
+erDiagram
+    CUSTOMER ||--o{ ORDER : places
+    ORDER ||--|{ ORDER_ITEM : contains
+    PRODUCT ||--o{ ORDER_ITEM : "ordered in"
+    CUSTOMER {
+        string id
+        string name
+        string email
+    }
+    ORDER {
+        string id
+        date created_at
+        string status
+    }
+    PRODUCT {
+        string id
+        string name
+        decimal price
+    }
+    ORDER_ITEM {
+        string order_id
+        string product_id
+        integer quantity
+    }
+```
 
 ## Conclusion
 

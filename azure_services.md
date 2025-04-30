@@ -1,3 +1,150 @@
+# Azure Services Guide
+
+```mermaid
+mindmap
+    root((Azure
+        Services))
+        (Compute)
+            [VMs]
+            [App Service]
+            [Functions]
+            [AKS]
+        (Storage)
+            [Blob]
+            [Files]
+            [Tables]
+            [Queues]
+        (Networking)
+            [VNet]
+            [Load Balancer]
+            [Front Door]
+        (Database)
+            [SQL]
+            [Cosmos DB]
+            [Redis]
+```
+
+## Service Selection Decision Trees
+
+```mermaid
+flowchart TB
+    subgraph "Compute Service Selection"
+        Start[Need Compute Service] --> Q1{Need Full Control?}
+        Q1 -->|Yes| VM[Virtual Machines]
+        Q1 -->|No| Q2{Containerized?}
+        Q2 -->|Yes| Q3{Need Orchestration?}
+        Q3 -->|Yes| AKS[Azure Kubernetes]
+        Q3 -->|No| ACI[Container Instances]
+        Q2 -->|No| Q4{Event Driven?}
+        Q4 -->|Yes| AF[Azure Functions]
+        Q4 -->|No| APP[App Service]
+    end
+```
+
+## Data Storage Decision Tree
+
+```mermaid
+flowchart TB
+    subgraph "Data Storage Selection"
+        Start[Need Data Storage] --> Q1{Structured Data?}
+        Q1 -->|Yes| Q2{Need Scale?}
+        Q2 -->|Yes| COSMOS[Cosmos DB]
+        Q2 -->|No| SQL[Azure SQL]
+        Q1 -->|No| Q3{File Storage?}
+        Q3 -->|Yes| FILES[Azure Files]
+        Q3 -->|No| BLOB[Blob Storage]
+    end
+```
+
+## Service Integration Patterns
+
+```mermaid
+graph TB
+    subgraph "Common Integration Patterns"
+        APP[Application] --> APIM[API Management]
+        APIM --> AF[Azure Functions]
+        AF --> EG[Event Grid]
+        AF --> SB[Service Bus]
+        
+        EG --> COSMOS[Cosmos DB]
+        SB --> SQL[Azure SQL]
+        
+        APP --> CDN[Azure CDN]
+        CDN --> BLOB[Blob Storage]
+    end
+```
+
+## Cloud Deployment Patterns
+
+```mermaid
+graph TB
+    subgraph "Azure Deployment Strategies"
+        direction TB
+        
+        subgraph "IaaS Pattern"
+            VM[Azure VMs] --> VMSS[VM Scale Sets]
+            VMSS --> AS[Auto Scaling]
+            VMSS --> LB[Load Balancer]
+        end
+        
+        subgraph "PaaS Pattern"
+            APP[App Service] --> ASP[App Service Plan]
+            ASP --> WebJobs[WebJobs]
+            ASP --> AF[Azure Functions]
+        end
+        
+        subgraph "Containers"
+            AKS[AKS] --> Pods[Kubernetes Pods]
+            ACI[Container Instances] --> Tasks[Container Tasks]
+        end
+    end
+```
+
+## Resource Organization
+
+```mermaid
+graph TB
+    subgraph "Azure Resource Hierarchy"
+        direction TB
+        
+        M[Management Group] --> S1[Subscription 1]
+        M --> S2[Subscription 2]
+        
+        S1 --> RG1[Resource Group 1]
+        S1 --> RG2[Resource Group 2]
+        
+        RG1 --> R1[Resources]
+        RG2 --> R2[Resources]
+        
+        subgraph "Resource Types"
+            Compute[Compute]
+            Storage[Storage]
+            Network[Network]
+        end
+    end
+```
+
+## Integration Patterns
+
+```mermaid
+flowchart TB
+    subgraph "Azure Integration Services"
+        direction TB
+        
+        API[API Management] --> Functions[Azure Functions]
+        Functions --> EventGrid[Event Grid]
+        EventGrid --> ServiceBus[Service Bus]
+        ServiceBus --> LogicApps[Logic Apps]
+        
+        subgraph "Data Flow"
+            D1[Ingest]
+            D2[Process]
+            D3[Store]
+            D4[Analyze]
+        end
+    end
+```
+
 # Azure Service Trade-offs
 
 This document outlines trade-offs between various Azure services.  It's a living document and subject to change as Azure evolves.  "Trade-off" means understanding that choosing one service means potentially sacrificing benefits offered by another. Consider your specific requirements (scale, cost, latency, reliability, complexity) to guide your decisions.
@@ -105,7 +252,5 @@ This document outlines trade-offs between various Azure services.  It's a living
 * **Description:** Managed Kubernetes service for container orchestration.
 * **Strengths:** Containerized application management.
 * **Weaknesses:** Significant complexity.
-
-
 
 **Note:** This is not an exhaustive list.  Each service has nuances and specific use cases. Always refer to the official Azure documentation for the most up-to-date information.  Consider conducting Proof-of-Concepts (POCs) to evaluate services in your specific environment.  Finally, Azure Advisor can help guide your architecture decisions.

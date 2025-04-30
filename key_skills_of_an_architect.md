@@ -1,5 +1,34 @@
 # Software Architect Skills Checklist
 
+```mermaid
+mindmap
+  root((Software
+    Architect
+    Skills))
+    (Technical Core)
+      [Distributed Systems]
+      [Concurrency]
+      [Data Modeling]
+      [API Design]
+      [Security]
+    (Infrastructure)
+      [Cloud Models]
+      [IaC]
+      [Containers]
+    (Development)
+      [Languages]
+      [Frameworks]
+      [Memory Management]
+    (Operations)
+      [Monitoring]
+      [Scaling]
+      [Security]
+    (Communication)
+      [Documentation]
+      [Leadership]
+      [Stakeholder Management]
+```
+
 Below is a comprehensive checklist of skills for software architects. I've organized them by category and indicated which require deep understanding versus basic understanding.
 
 ## Technical Foundations

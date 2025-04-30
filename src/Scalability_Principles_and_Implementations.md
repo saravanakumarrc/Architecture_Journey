@@ -2,6 +2,130 @@
 
 Scalability is the capability of a system to handle increased workload by adapting and accommodating growth. Here's a comprehensive guide to scalability principles and their implementations:
 
+```mermaid
+graph TB
+    subgraph "Scalability Types"
+        direction TB
+        
+        subgraph "Horizontal Scaling"
+            LB[Load Balancer]
+            S1[Server 1]
+            S2[Server 2]
+            S3[Server 3]
+            LB -->|Traffic| S1
+            LB -->|Traffic| S2
+            LB -->|Traffic| S3
+        end
+        
+        subgraph "Vertical Scaling"
+            CPU[CPU]
+            RAM[Memory]
+            DISK[Storage]
+            CPU --- RAM
+            RAM --- DISK
+        end
+    end
+```
+
+## Architectural Patterns for Scalability
+
+```mermaid
+flowchart TB
+    subgraph "Scalable Architecture"
+        direction TB
+        
+        C[Client] --> CDN[CDN]
+        CDN --> LB[Load Balancer]
+        
+        subgraph "Application Tier"
+            LB --> API1[API Server 1]
+            LB --> API2[API Server 2]
+            API1 --> Cache[Cache Layer]
+            API2 --> Cache
+        end
+        
+        subgraph "Data Tier"
+            Cache --> DB1[(Primary DB)]
+            Cache --> DB2[(Read Replica)]
+            Cache --> DB3[(Read Replica)]
+        end
+    end
+```
+
+## Scaling Strategies
+
+```mermaid
+mindmap
+    root((Scaling
+        Strategies))
+        (Infrastructure)
+            [Auto Scaling]
+            [Load Balancing]
+            [Geographic Distribution]
+        (Application)
+            [Caching]
+            [Connection Pooling]
+            [Async Processing]
+        (Data)
+            [Sharding]
+            [Replication]
+            [Partitioning]
+        (Optimization)
+            [Code Efficiency]
+            [Resource Management]
+            [Performance Tuning]
+```
+
+## Deployment Strategies
+
+```mermaid
+graph TB
+    subgraph "Deployment Patterns"
+        direction TB
+        
+        subgraph "Rolling Update"
+            R1[V1] --> R2[V2]
+            R2 --> R3[V1]
+            R3 --> R4[V2]
+        end
+        
+        subgraph "Blue-Green"
+            B[Blue/V1] --> G[Green/V2]
+            G --> T[Traffic Switch]
+        end
+        
+        subgraph "Canary"
+            C1[90% V1] --> C2[10% V2]
+            C2 --> C3[Gradual Increase]
+        end
+    end
+```
+
+## Scaling Patterns
+
+```mermaid
+flowchart TB
+    subgraph "Auto-scaling Strategies"
+        direction TB
+        
+        M[Metrics] --> T{Threshold Check}
+        T -->|Above Threshold| S[Scale Out]
+        T -->|Below Threshold| I[Scale In]
+        
+        subgraph "Scaling Triggers"
+            CPU[CPU Usage]
+            MEM[Memory Usage]
+            REQ[Request Count]
+            LAT[Latency]
+        end
+        
+        CPU --> T
+        MEM --> T
+        REQ --> T
+        LAT --> T
+    end
+```
+
 ## 1. Horizontal Scaling (Scaling Out)
 
 ### Principles
@@ -108,6 +232,37 @@ upstream backend {
     server backend1.example.com:8080 weight=3;
     server backend2.example.com:8080 weight=2;
     server backup1.example.com:8080 backup;
+}
+```
+
+## Deployment Implementation
+
+```typescript
+// Blue-Green Deployment Controller
+interface DeploymentConfig {
+    version: string;
+    replicas: number;
+    healthCheck: () => Promise<boolean>;
+}
+
+class BlueGreenDeployment {
+    private activeVersion: string;
+    private standbyVersion: string;
+
+    async deploy(newVersion: DeploymentConfig): Promise<void> {
+        // Deploy new version alongside current
+        await this.deployStandby(newVersion);
+        
+        // Verify health
+        if (await newVersion.healthCheck()) {
+            // Switch traffic
+            await this.switchTraffic(newVersion.version);
+            this.activeVersion = newVersion.version;
+        } else {
+            // Rollback
+            await this.rollback();
+        }
+    }
 }
 ```
 
@@ -266,6 +421,27 @@ async function publishEvent(topicEndpoint, event) {
         eventTime: new Date()
     }]);
 }
+```
+
+## Load Balancing Strategy
+
+```mermaid
+graph TB
+    subgraph "Load Distribution"
+        LB[Load Balancer] --> S1[Server 1]
+        LB --> S2[Server 2]
+        LB --> S3[Server 3]
+        
+        subgraph "Health Checks"
+            H1[Health Monitor]
+            H2[Circuit Breaker]
+            H3[Failover Logic]
+        end
+        
+        H1 --> S1
+        H1 --> S2
+        H1 --> S3
+    end
 ```
 
 ## Best Practices for Scalability

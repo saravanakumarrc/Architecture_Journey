@@ -1,5 +1,36 @@
 # API Design Concepts and Best Practices
 
+```mermaid
+graph TB
+    subgraph "API Styles"
+        direction TB
+        
+        subgraph "REST"
+            R1[Resources]
+            R2[HTTP Methods]
+            R3[Status Codes]
+            R1 --- R2
+            R2 --- R3
+        end
+        
+        subgraph "GraphQL"
+            G1[Queries]
+            G2[Mutations]
+            G3[Types]
+            G1 --- G2
+            G2 --- G3
+        end
+        
+        subgraph "gRPC"
+            P1[Protocol Buffers]
+            P2[Services]
+            P3[Methods]
+            P1 --- P2
+            P2 --- P3
+        end
+    end
+```
+
 An API (Application Programming Interface) serves as a contract between different software components. This guide covers different API styles, their design principles, and best practices.
 
 ## Common API Styles
@@ -203,209 +234,267 @@ graph TD
     G[Bi-directional] -->|Multiple Requests/Responses| H[Bidirectional Stream RPC]
 ```
 
-## API Design Best Practices
+# API Design Patterns and Best Practices
 
-### 1. Versioning
 ```mermaid
-graph LR
-    A[API Versions] --> B[URI Path /v1/]
-    A --> C[Query Parameter ?version=1]
-    A --> D[Custom Header X-API-Version]
-    A --> E[Content Negotiation Accept]
+mindmap
+    root((API Design))
+        (REST)
+            [Resources]
+            [HTTP Methods]
+            [Status Codes]
+            [HATEOAS]
+        (GraphQL)
+            [Queries]
+            [Mutations]
+            [Schemas]
+        (gRPC)
+            [Protobuf]
+            [Streaming]
+            [Services]
 ```
 
-### 2. Security
-- Authentication
-- Authorization
-- Rate limiting
-- Input validation
-- HTTPS
-- API keys
-- OAuth 2.0/OpenID Connect
+## API Architecture Patterns
 
-### 3. Error Handling
-```json
-{
-    "status": 400,
-    "code": "INVALID_INPUT",
-    "message": "Invalid product data",
-    "details": [{
-        "field": "price",
-        "error": "must be greater than 0"
-    }]
-}
-```
-
-### 4. Documentation
-- OpenAPI/Swagger for REST
-- GraphQL Schema/Introspection
-- Protocol Buffers for gRPC
-- Code examples
-- Authentication details
-- Rate limiting info
-
-### 5. Performance Optimization
 ```mermaid
-graph TD
-    A[API Performance] --> B[Caching]
-    A --> C[Pagination]
-    A --> D[Compression]
-    A --> E[Connection Pooling]
-    A --> F[Async Operations]
+graph TB
+    subgraph "API Gateway Pattern"
+        direction TB
+        
+        C[Clients] --> GW[API Gateway]
+        
+        subgraph "Backend Services"
+            GW --> S1[Service 1]
+            GW --> S2[Service 2]
+            GW --> S3[Service 3]
+        end
+        
+        subgraph "Cross-Cutting Concerns"
+            AU[Authentication]
+            RB[Rate Limiting]
+            CA[Caching]
+            DC[Documentation]
+        end
+        
+        GW --> AU
+        GW --> RB
+        GW --> CA
+    end
 ```
 
-## API Design Patterns
+## API Version Management
 
-### 1. CQRS (Command Query Responsibility Segregation)
 ```mermaid
-graph TD
-    A[API Client] --> B[Query API]
-    A --> C[Command API]
-    B --> D[Read Database]
-    C --> E[Write Database]
-    E --> F[Sync] --> D
+sequenceDiagram
+    participant C as Client
+    participant G as Gateway
+    participant V1 as API v1
+    participant V2 as API v2
+    
+    C->>G: Request /v1/resource
+    G->>V1: Route to v1
+    V1-->>C: Response
+    
+    C->>G: Request /v2/resource
+    G->>V2: Route to v2
+    V2-->>C: Response
 ```
-
-### 2. API Gateway Pattern
-```mermaid
-graph TD
-    A[Clients] --> B[API Gateway]
-    B --> C[Authentication]
-    B --> D[Rate Limiting]
-    B --> E[Load Balancing]
-    B --> F[Service 1]
-    B --> G[Service 2]
-    B --> H[Service 3]
-```
-
-### 3. Backend for Frontend (BFF)
-```mermaid
-graph TD
-    A[Mobile Client] --> B[Mobile BFF]
-    C[Web Client] --> D[Web BFF]
-    E[Desktop Client] --> F[Desktop BFF]
-    B --> G[Microservices]
-    D --> G
-    F --> G
-```
-
-## Comparison of API Styles
-
-### REST
-**Pros:**
-- Simple and familiar
-- Cacheable
-- Scalable
-- Wide tool support
-
-**Cons:**
-- Over/under-fetching
-- Multiple round trips
-- Endpoint proliferation
-
-### GraphQL
-**Pros:**
-- Flexible data fetching
-- Strong typing
-- Single endpoint
-- Real-time support
-
-**Cons:**
-- Complex caching
-- Learning curve
-- Server complexity
-
-### gRPC
-**Pros:**
-- High performance
-- Strong typing
-- Code generation
-- Bi-directional streaming
-
-**Cons:**
-- Limited browser support
-- Binary protocol
-- More complex setup
-
-## API Design Decision Matrix
-
-| Criteria | REST | GraphQL | gRPC |
-|----------|------|---------|------|
-| Performance | Good | Good | Excellent |
-| Browser Support | Excellent | Excellent | Limited |
-| Learning Curve | Low | Medium | High |
-| Flexibility | Good | Excellent | Good |
-| Tooling | Excellent | Good | Good |
-| Real-time Support | Limited | Good | Excellent |
-| Mobile Support | Good | Good | Excellent |
 
 ## Implementation Examples
 
-### 1. REST API Implementation (Node.js/Express)
-```javascript
-const express = require('express');
-const app = express();
+### 1. REST API Design
 
-app.get('/api/v1/products', (req, res) => {
-    // List products
-});
-
-app.get('/api/v1/products/:id', (req, res) => {
-    // Get single product
-});
-
-app.post('/api/v1/products', (req, res) => {
-    // Create product
-});
+```typescript
+// RESTful Resource Controller Pattern
+@Controller('users')
+class UserController {
+    @Get()
+    async getUsers(
+        @Query() pagination: PaginationDTO
+    ): Promise<PagedResponse<User>> {
+        return this.userService.getUsers(pagination);
+    }
+    
+    @Get(':id')
+    async getUser(@Param('id') id: string): Promise<User> {
+        const user = await this.userService.getUser(id);
+        if (!user) throw new NotFoundException();
+        return user;
+    }
+    
+    @Post()
+    @HttpCode(201)
+    async createUser(@Body() dto: CreateUserDTO): Promise<User> {
+        return this.userService.createUser(dto);
+    }
+    
+    @Put(':id')
+    async updateUser(
+        @Param('id') id: string,
+        @Body() dto: UpdateUserDTO
+    ): Promise<User> {
+        return this.userService.updateUser(id, dto);
+    }
+    
+    @Delete(':id')
+    @HttpCode(204)
+    async deleteUser(@Param('id') id: string): Promise<void> {
+        await this.userService.deleteUser(id);
+    }
+}
 ```
 
-### 2. GraphQL Implementation (Node.js/Apollo)
-```javascript
+### 2. GraphQL Schema Design
+
+```typescript
+// GraphQL Schema and Resolver Pattern
 const typeDefs = gql`
-  type Product {
-    id: ID!
-    name: String!
-    price: Float!
-  }
+    type User {
+        id: ID!
+        name: String!
+        email: String!
+        posts: [Post!]!
+    }
+    
+    type Post {
+        id: ID!
+        title: String!
+        content: String!
+        author: User!
+    }
+    
+    type Query {
+        user(id: ID!): User
+        users(page: Int, limit: Int): [User!]!
+    }
+    
+    type Mutation {
+        createUser(input: CreateUserInput!): User!
+        updateUser(id: ID!, input: UpdateUserInput!): User!
+    }
 `;
 
-const resolvers = {
-  Query: {
-    products: () => products,
-    product: (_, { id }) => products.find(p => p.id === id)
-  }
-};
+class UserResolver {
+    @Query(returns => User)
+    async user(@Arg('id') id: string): Promise<User> {
+        return this.userService.findById(id);
+    }
+    
+    @FieldResolver()
+    async posts(@Root() user: User): Promise<Post[]> {
+        return this.postService.findByAuthor(user.id);
+    }
+    
+    @Mutation(returns => User)
+    async createUser(
+        @Arg('input') input: CreateUserInput
+    ): Promise<User> {
+        return this.userService.create(input);
+    }
+}
 ```
 
-### 3. gRPC Implementation (Node.js)
-```javascript
-const service = {
-  getProduct: (call, callback) => {
-    const product = products.find(p => p.id === call.request.id);
-    callback(null, product);
-  }
-};
+### 3. API Gateway Implementation
+
+```typescript
+interface GatewayConfig {
+    auth: {
+        enabled: boolean;
+        provider: AuthProvider;
+    };
+    rateLimit: {
+        enabled: boolean;
+        limit: number;
+        window: number;
+    };
+    caching: {
+        enabled: boolean;
+        ttl: number;
+    };
+}
+
+class APIGateway {
+    constructor(private config: GatewayConfig) {}
+
+    async handleRequest(req: Request): Promise<Response> {
+        // Apply cross-cutting concerns
+        if (this.config.auth.enabled) {
+            await this.authenticateRequest(req);
+        }
+        
+        if (this.config.rateLimit.enabled) {
+            await this.checkRateLimit(req);
+        }
+        
+        // Route and handle request
+        const response = await this.routeRequest(req);
+        
+        // Apply caching if enabled
+        if (this.config.caching.enabled) {
+            await this.cacheResponse(req, response);
+        }
+        
+        return response;
+    }
+
+    private async routeRequest(req: Request): Promise<Response> {
+        const route = await this.findRoute(req);
+        const service = await this.loadBalancer.selectService(route);
+        
+        return this.proxyRequest(service, req);
+    }
+}
 ```
 
-## Conclusion
+## API Documentation Flow
 
-Choosing the right API style depends on your specific requirements:
+```mermaid
+flowchart TB
+    subgraph "API Documentation"
+        direction TB
+        
+        subgraph "Generation"
+            C[Code] --> AS[OpenAPI Spec]
+            AS --> D[Documentation]
+        end
+        
+        subgraph "Testing"
+            D --> E[Examples]
+            E --> T[Test Cases]
+        end
+        
+        subgraph "Publishing"
+            D --> P[Portal]
+            P --> V[API Versions]
+            P --> S[SDKs]
+        end
+    end
+```
 
-- Use **REST** for:
-  - Simple CRUD operations
-  - Caching requirements
-  - Wide client support
+## Best Practices
 
-- Use **GraphQL** for:
-  - Flexible data requirements
-  - Reducing network requests
-  - Real-time features
-  - Multiple client types
+1. **API Design Principles**
+   - Follow REST conventions
+   - Use proper HTTP methods
+   - Implement proper error handling
+   - Version your APIs
 
-- Use **gRPC** for:
-  - Microservices communication
-  - High-performance requirements
-  - Streaming data
-  - Code generation needs
+2. **Security**
+   - Implement authentication
+   - Use proper authorization
+   - Validate inputs
+   - Rate limit requests
 
-The key is to understand these patterns deeply and select the appropriate style based on your specific use case, performance requirements, and team expertise.
+3. **Performance**
+   - Implement caching
+   - Use pagination
+   - Optimize payloads
+   - Monitor performance
+
+4. **Documentation**
+   - Keep docs updated
+   - Provide examples
+   - Include error scenarios
+   - Maintain changelog
+
+Remember: Good API design focuses on simplicity, consistency, and usability. Always design with the consumer in mind and maintain backward compatibility when possible.

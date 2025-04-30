@@ -181,6 +181,156 @@ const policy = new azure.recoveryservices.ReplicationPolicy("example-policy", {
 });
 ```
 
+## Disaster Recovery Patterns
+
+```mermaid
+graph TB
+    subgraph "DR Strategies"
+        direction TB
+        
+        subgraph "Active-Active"
+            R1[Region 1] <--> R2[Region 2]
+            LB[Global Load Balancer]
+            LB --> R1
+            LB --> R2
+        end
+        
+        subgraph "Active-Passive"
+            P1[Primary Region] -.->|Failover| P2[Secondary Region]
+            P1 -->|Sync| P2
+        end
+        
+        subgraph "Recovery Objectives"
+            RTO[Recovery Time Objective]
+            RPO[Recovery Point Objective]
+        end
+    end
+```
+
+## Failover Architecture
+
+```mermaid
+sequenceDiagram
+    participant DNS as DNS Service
+    participant HCP as Health Check System
+    participant P as Primary Region
+    participant S as Secondary Region
+    participant Rep as Data Replication
+    
+    Note over P,S: Normal Operation
+    Rep->>Rep: Continuous Replication
+    HCP->>P: Health Check
+    
+    alt Primary Failure
+        HCP->>P: Detect Failure
+        HCP->>DNS: Update DNS
+        DNS->>S: Route to Secondary
+        S->>S: Promote to Primary
+        Note over P,S: Failover Complete
+    end
+```
+
+## High Availability Components
+
+```mermaid
+graph TB
+    subgraph "HA Architecture"
+        direction TB
+        
+        GLB[Global Load Balancer] --> DC1[Data Center 1]
+        GLB --> DC2[Data Center 2]
+        
+        subgraph "Data Center 1"
+            LB1[Load Balancer] --> App1[App Servers]
+            App1 --> DB1[(Primary DB)]
+        end
+        
+        subgraph "Data Center 2"
+            LB2[Load Balancer] --> App2[App Servers]
+            App2 --> DB2[(Secondary DB)]
+        end
+        
+        DB1 -->|Replication| DB2
+    end
+```
+
+## Disaster Recovery Implementation
+
+```typescript
+interface FailoverConfig {
+    primaryRegion: string;
+    secondaryRegion: string;
+    healthCheckInterval: number;
+    failureThreshold: number;
+}
+
+class RegionalFailover {
+    private failures: number = 0;
+    private isFailedOver: boolean = false;
+
+    constructor(private config: FailoverConfig) {
+        this.startHealthChecks();
+    }
+
+    private async startHealthChecks(): Promise<void> {
+        setInterval(async () => {
+            try {
+                await this.checkPrimaryHealth();
+                this.failures = 0;
+                if (this.isFailedOver) {
+                    await this.failbackToPrimary();
+                }
+            } catch (error) {
+                this.failures++;
+                if (this.failures >= this.config.failureThreshold) {
+                    await this.failoverToSecondary();
+                }
+            }
+        }, this.config.healthCheckInterval);
+    }
+
+    private async failoverToSecondary(): Promise<void> {
+        if (this.isFailedOver) return;
+
+        // Implement failover logic:
+        // 1. Update DNS/Traffic Manager
+        // 2. Promote secondary to primary
+        // 3. Update application configurations
+        this.isFailedOver = true;
+    }
+
+    private async failbackToPrimary(): Promise<void> {
+        // Implement failback logic:
+        // 1. Verify primary is healthy
+        // 2. Sync any missed data
+        // 3. Switch traffic back
+        this.isFailedOver = false;
+    }
+}
+```
+
+## Data Replication Strategies
+
+```mermaid
+flowchart TB
+    subgraph "Replication Models"
+        direction TB
+        
+        subgraph "Synchronous"
+            S1[Write] --> S2[Primary DB]
+            S2 -->|Wait| S3[Secondary DB]
+            S3 -->|Confirm| S2
+            S2 -->|Complete| S1
+        end
+        
+        subgraph "Asynchronous"
+            A1[Write] --> A2[Primary DB]
+            A2 -->|Complete| A1
+            A2 -.->|Background| A3[Secondary DB]
+        end
+    end
+```
+
 ## 6. Service Mesh Architecture
 
 ### Principles
@@ -384,7 +534,87 @@ resource "azurerm_storage_account" "example" {
 }
 ```
 
-## Best Practices for High Availability
+# High Availability Design Patterns
+
+```mermaid
+graph TB
+    subgraph "High Availability Overview"
+        direction TB
+        
+        subgraph "Load Balancing"
+            LB[Load Balancer]
+            S1[Server 1]
+            S2[Server 2]
+            S3[Server 3]
+            LB -->|Traffic| S1
+            LB -->|Traffic| S2
+            LB -->|Traffic| S3
+        end
+        
+        subgraph "Data Replication"
+            M[(Master DB)]
+            R1[(Replica 1)]
+            R2[(Replica 2)]
+            M -->|Sync| R1
+            M -->|Sync| R2
+        end
+        
+        subgraph "Failover"
+            A[Active Region]
+            P[Passive Region]
+            A -.->|Failover| P
+        end
+    end
+```
+
+## Active-Active vs Active-Passive
+
+```mermaid
+graph LR
+    subgraph "Active-Active"
+        direction LR
+        AA1[Region A] <-->|Live Traffic| AA2[Region B]
+    end
+    
+    subgraph "Active-Passive"
+        direction LR
+        AP1[Active Region] -.->|Failover| AP2[Standby Region]
+    end
+```
+
+## Availability Zones and Regions
+
+```mermaid
+flowchart TB
+    subgraph "Multi-Region Architecture"
+        subgraph "Region 1"
+            direction TB
+            LB1[Load Balancer]
+            AZ1[Zone 1]
+            AZ2[Zone 2]
+            AZ3[Zone 3]
+            LB1 --> AZ1
+            LB1 --> AZ2
+            LB1 --> AZ3
+        end
+        
+        subgraph "Region 2"
+            direction TB
+            LB2[Load Balancer]
+            AZ4[Zone 1]
+            AZ5[Zone 2]
+            AZ6[Zone 3]
+            LB2 --> AZ4
+            LB2 --> AZ5
+            LB2 --> AZ6
+        end
+        
+        DNS[Global DNS] --> LB1
+        DNS --> LB2
+    end
+```
+
+## High Availability Principles
 
 1. **Design for Failure**
    - Assume components will fail
