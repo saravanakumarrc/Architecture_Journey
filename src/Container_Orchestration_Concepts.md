@@ -1,196 +1,257 @@
-# Container Orchestration Concepts
+# Container Orchestration Concepts and Implementation
 
 ```mermaid
 mindmap
     root((Container
         Orchestration))
-        (Core Concepts)
-            [Containers]
-            [Pods]
-            [Services]
-            [Deployments]
-        (Platforms)
-            [Kubernetes]
-            [Docker Swarm]
-            [Azure AKS]
-            [Amazon EKS]
-        (Management)
-            [Scaling]
+        (Kubernetes)
+            [Pod Management]
+            [Service Discovery]
             [Load Balancing]
-            [Health Checks]
+            [Auto Scaling]
+        (Deployment)
             [Rolling Updates]
+            [Blue-Green]
+            [Canary]
+            [Helm Charts]
+        (Networking)
+            [Service Mesh]
+            [Ingress]
+            [Network Policies]
+        (Storage)
+            [Volumes]
+            [PersistentVolumes]
+            [StorageClass]
+
 ```
 
-## Container Architecture
+## Overview
 
-### 1. Container Components
+Container orchestration automates the deployment, scaling, and management of containerized applications. This guide covers key concepts and implementations using Kubernetes and Helm, with examples in C# and Python.
 
-```mermaid
-graph TB
-    subgraph "Container Structure"
-        direction TB
-        
-        subgraph "Container"
-            A[Application]
-            R[Runtime]
-            L[Libraries]
-            B[Binaries]
-        end
-        
-        subgraph "Host"
-            K[Kernel]
-            H[Hardware]
-            K --> H
-        end
-        
-        A & R & L & B --> K
-    end
-```
+## Core Concepts
 
-### 2. Container Lifecycle
+### 1. Pod Management and Service Discovery
 
-```mermaid
-stateDiagram-v2
-    [*] --> Created
-    Created --> Running
-    Running --> Paused
-    Paused --> Running
-    Running --> Stopped
-    Stopped --> Running
-    Stopped --> [*]
-```
+Example Kubernetes deployment for a C# Web API:
 
-## Kubernetes Architecture
-
-### 1. Cluster Components
-
-```mermaid
-graph TB
-    subgraph "Kubernetes Cluster"
-        direction TB
-        
-        subgraph "Control Plane"
-            API[API Server]
-            ETCD[etcd]
-            SCHED[Scheduler]
-            CM[Controller Manager]
-        end
-        
-        subgraph "Worker Nodes"
-            N1[Node 1]
-            N2[Node 2]
-            N3[Node 3]
-        end
-        
-        API --> N1 & N2 & N3
-        API <--> ETCD
-        SCHED --> API
-        CM --> API
-    end
-```
-
-### 2. Basic Resource Types
 ```yaml
-# Pod Definition
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: web-application
+  name: webapi-deployment
   labels:
-    app: web
+    app: webapi
 spec:
-  containers:
-  - name: web
-    image: nginx:1.25
-    ports:
-    - containerPort: 80
-    resources:
-      requests:
-        memory: "64Mi"
-        cpu: "250m"
-      limits:
-        memory: "128Mi"
-        cpu: "500m"
+  replicas: 3
+  selector:
+    matchLabels:
+      app: webapi
+  template:
+    metadata:
+      labels:
+        app: webapi
+    spec:
+      containers:
+      - name: webapi
+        image: myregistry.azurecr.io/webapi:v1
+        ports:
+        - containerPort: 80
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: "Production"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 15
+          periodSeconds: 20
 ```
 
-## Orchestration Patterns
+Corresponding C# Health Check Implementation:
 
-### 1. Deployment Strategies
+```csharp
+public class Startup
+{
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddHealthChecks()
+            .AddCheck("database", async () =>
+            {
+                try
+                {
+                    await _dbContext.Database.CanConnectAsync();
+                    return HealthCheckResult.Healthy();
+                }
+                catch (Exception ex)
+                {
+                    return HealthCheckResult.Unhealthy(ex.Message);
+                }
+            });
+    }
 
-```mermaid
-graph LR
-    subgraph "Update Strategies"
-        direction LR
-        
-        subgraph "Rolling Update"
-            R1[V1] --> R2[V2]
-            R2 --> R3[V2]
-            R3 --> R4[V2]
-        end
-        
-        subgraph "Blue/Green"
-            B[Blue/V1] --> G[Green/V2]
-        end
-        
-        subgraph "Canary"
-            C1[90% V1] --> C2[10% V2]
-            C2 --> C3[V2]
-        end
-    end
+    public void Configure(IApplicationBuilder app)
+    {
+        app.UseHealthChecks("/health");
+    }
+}
 ```
 
-### 2. Service Discovery
+### 2. Service Definition and Load Balancing
+
 ```yaml
-# Service Definition
 apiVersion: v1
 kind: Service
 metadata:
-  name: web-service
+  name: webapi-service
 spec:
   selector:
-    app: web
+    app: webapi
   ports:
   - port: 80
-    targetPort: 8080
+    targetPort: 80
   type: LoadBalancer
 ```
 
-## Scaling Patterns
+### 3. Helm Chart Structure
 
-### 1. Horizontal Pod Autoscaling
+Example Helm chart for a Python FastAPI application:
 
+```yaml
+# Chart.yaml
+apiVersion: v2
+name: fastapi-app
+description: A Helm chart for Python FastAPI application
+version: 0.1.0
+type: application
+
+# values.yaml
+replicaCount: 3
+image:
+  repository: myregistry.azurecr.io/fastapi-app
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: api.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+```
+
+Python FastAPI application with health checks:
+
+```python
+from fastapi import FastAPI, status
+from fastapi.responses import JSONResponse
+import asyncio
+
+app = FastAPI()
+
+async def check_database():
+    try:
+        # Simulate database check
+        await asyncio.sleep(0.1)
+        return True
+    except Exception:
+        return False
+
+@app.get("/health")
+async def health_check():
+    db_healthy = await check_database()
+    
+    if not db_healthy:
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={"status": "unhealthy", "details": "Database connection failed"}
+        )
+    
+    return {"status": "healthy"}
+```
+
+## Deployment Patterns
+
+### 1. Rolling Updates
 ```mermaid
-graph TB
-    subgraph "Autoscaling"
-        direction TB
-        
-        M[Metrics Server] --> HPA[HPA Controller]
-        HPA --> D[Deployment]
-        D --> P1[Pod 1]
-        D --> P2[Pod 2]
-        D -.-> P3[Pod 3]
-        
-        subgraph "Metrics"
-            CPU[CPU Usage]
-            MEM[Memory]
-            REQ[Requests/s]
-        end
+sequenceDiagram
+    participant K as Kubernetes
+    participant Old as Old Pods
+    participant New as New Pods
+    
+    K->>Old: Start Rolling Update
+    loop For each pod
+        K->>New: Create New Pod
+        New->>K: Ready
+        K->>Old: Remove Old Pod
     end
 ```
 
-### 2. Autoscaling Configuration
+### 2. Blue-Green Deployment
+```mermaid
+graph TB
+    subgraph "Blue-Green Deployment"
+        LB[Load Balancer]
+        
+        subgraph "Blue Environment"
+            B1[Pod 1]
+            B2[Pod 2]
+        end
+        
+        subgraph "Green Environment"
+            G1[Pod 1]
+            G2[Pod 2]
+        end
+        
+        LB -->|Active| B1
+        LB -->|Active| B2
+        LB -.->|Standby| G1
+        LB -.->|Standby| G2
+    end
+```
+
+## Auto Scaling
+
+### Horizontal Pod Autoscaling (HPA)
+
 ```yaml
-# HPA Configuration
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: web-hpa
+  name: webapi-hpa
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: web
-  minReplicas: 2
+    name: webapi-deployment
+  minReplicas: 3
   maxReplicas: 10
   metrics:
   - type: Resource
@@ -199,123 +260,88 @@ spec:
       target:
         type: Utilization
         averageUtilization: 80
-```
-
-## Networking Concepts
-
-### 1. Network Architecture
-
-```mermaid
-graph TB
-    subgraph "Kubernetes Networking"
-        direction TB
-        
-        I[Ingress] --> S[Service]
-        S --> P1[Pod 1]
-        S --> P2[Pod 2]
-        
-        subgraph "Pod Network"
-            P1 <--> P2
-        end
-        
-        subgraph "Service Mesh"
-            SM1[Proxy]
-            SM2[Proxy]
-            SM1 <--> SM2
-        end
-    end
-```
-
-### 2. Network Policies
-```yaml
-# Network Policy
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: api-network-policy
-spec:
-  podSelector:
-    matchLabels:
-      app: api
-  policyTypes:
-  - Ingress
-  - Egress
-  ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: web
-    ports:
-    - protocol: TCP
-      port: 8080
-```
-
-## Storage Management
-
-### 1. Storage Architecture
-
-```mermaid
-graph TB
-    subgraph "Storage Options"
-        direction TB
-        
-        subgraph "Persistent Storage"
-            PV[PersistentVolume]
-            PVC[PersistentVolumeClaim]
-            SC[StorageClass]
-        end
-        
-        subgraph "Ephemeral Storage"
-            ES[emptyDir]
-            CM[ConfigMap]
-            SEC[Secret]
-        end
-        
-        PVC --> PV
-        SC --> PV
-    end
-```
-
-### 2. Storage Configuration
-```yaml
-# Persistent Volume Claim
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: data-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: standard
-  resources:
-    requests:
-      storage: 10Gi
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
 ```
 
 ## Best Practices
 
 1. **Resource Management**
-   - Set resource requests/limits
-   - Implement autoscaling
-   - Monitor resource usage
-   - Plan capacity properly
+   - Always set resource requests and limits
+   - Use namespace resource quotas
+   - Implement horizontal pod autoscaling
 
-2. **High Availability**
-   - Use multiple replicas
-   - Implement pod anti-affinity
-   - Configure liveness probes
-   - Set up cluster autoscaling
+2. **Security**
+   - Use network policies
+   - Implement RBAC
+   - Regular image scanning
+   - Use secret management
 
-3. **Security**
-   - Use RBAC
-   - Implement network policies
-   - Scan container images
-   - Manage secrets properly
+3. **Monitoring**
+   - Implement comprehensive health checks
+   - Use Prometheus for metrics
+   - Set up Grafana dashboards
+   - Enable logging with EFK/ELK stack
 
-4. **Monitoring**
-   - Deploy monitoring tools
-   - Set up logging
-   - Configure alerts
-   - Track cluster health
+4. **Deployment Strategy**
+   - Use GitOps workflows
+   - Implement proper CI/CD pipelines
+   - Use Helm for package management
+   - Regular backup and disaster recovery plans
 
-Remember: Container orchestration is about managing the lifecycle of containerized applications at scale. Always consider operational requirements when designing your container strategy.
+## Service Mesh Integration
+
+```mermaid
+graph TB
+    subgraph "Service Mesh Architecture"
+        direction TB
+        
+        subgraph "Pod 1"
+            App1[Application]
+            Proxy1[Sidecar Proxy]
+        end
+        
+        subgraph "Pod 2"
+            App2[Application]
+            Proxy2[Sidecar Proxy]
+        end
+        
+        subgraph "Control Plane"
+            CP[Istio Control]
+            Config[Config API]
+        end
+        
+        App1 <--> Proxy1
+        App2 <--> Proxy2
+        Proxy1 <--> Proxy2
+        CP --> Proxy1
+        CP --> Proxy2
+    end
+```
+
+## Monitoring and Observability
+
+```mermaid
+graph TB
+    subgraph "Monitoring Stack"
+        P[Prometheus]
+        G[Grafana]
+        A[Alert Manager]
+        
+        subgraph "Application Pods"
+            M1[Metrics Endpoint]
+            M2[Metrics Endpoint]
+        end
+        
+        M1 --> P
+        M2 --> P
+        P --> G
+        P --> A
+    end
+```
+
+Remember: Container orchestration is about more than just running containers - it's about managing the entire application lifecycle, ensuring reliability, scalability, and maintainability of your containerized applications.

@@ -57,12 +57,12 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 ## Cloud & Infrastructure
 
 ### Deep Understanding Required
-- [ ] Cloud architecture models (IaaS, PaaS, SaaS, FaaS)
-- [ ] Infrastructure as Code principles
-- [ ] Container orchestration concepts
-- [ ] Service mesh architectures
+- [ ] [Cloud architecture models](src/Cloud_Architecture_Models.md)
+- [ ] [Infrastructure as Code principles](src/Infrastructure_as_Code_Principles.md)
+- [ ] [Container orchestration concepts](src/Container_Orchestration_Concepts.md)
+- [ ] [Service mesh architectures](src/Service_Mesh_Patterns.md)
 - [ ] Multi-region deployment strategies
-- [ ] Cost optimization strategies
+- [ ] [Cost optimization strategies](src/Cost_Optimization_Strategies.md)
 - [ ] Resource provisioning and scaling
 
 ### Basic Understanding Required
@@ -133,7 +133,7 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 
 ### Deep Understanding Required
 - [ ] Integration patterns and anti-patterns
-- [ ] Message broker architectures
+- [ ] [Message broker architectures](src/Message_Broker_Architectures.md)
 - [ ] Asynchronous communication patterns
 - [ ] API gateway patterns
 - [ ] Service discovery mechanisms
