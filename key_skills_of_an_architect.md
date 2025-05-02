@@ -91,8 +91,8 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 - [ ] [Data warehousing concepts](src/Data_Warehousing_Concepts.md)
 - [ ] [Big data processing frameworks](src/Big_Data_Processing_Frameworks.md)
 - [ ] [SQL optimization techniques](src/SQL_Optimization_Techniques.md)
-- [ ] Time series databases
-- [ ] Graph databases
+- [ ] [Time series databases](src/Time_Series_Databases.md)
+- [ ] [Graph databases](src/Graph_Databases.md)
 
 ## Security & Compliance
 
@@ -139,11 +139,11 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 - [ ] [Service discovery patterns](src/Service_Discovery_Patterns.md)
 
 ### Basic Understanding Required
-- [ ] Specific message queue technologies (Kafka, RabbitMQ, etc.)
-- [ ] Protocol buffers and data serialization
-- [ ] Webhook implementation patterns
-- [ ] BFF (Backend for Frontend) pattern
-- [ ] API management tools
+- [ ] [Specific message queue technologies (Kafka, RabbitMQ, etc.)](src/Message_Queue_Technologies.md)
+- [ ] [Protocol buffers and data serialization](src/)
+- [ ] [Webhook implementation patterns](src/Webhook_Implementation_Patterns.md)
+- [ ] [BFF (Backend for Frontend) pattern](src/Backend_for_Frontend_Pattern.md)
+- [ ] [API management tools](src/API_Management_Tools.md)
 
 ## Observability & Operations
 
@@ -156,12 +156,12 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 - [ ] [High Availability Design](src/High_Availability_Design.md)
 
 ### Basic Understanding Required
-- [ ] Specific monitoring tools (Prometheus, Grafana, etc.)
-- [ ] Log aggregation systems (ELK, Loki, etc.)
-- [ ] APM (Application Performance Monitoring) tools
+- [ ] [Monitoring Tools](src/Monitoring_Tools.md)
+- [ ] [Log Aggregation Systems](src/Log_Aggregation_Systems.md)
+- [ ] [APM Tools](src/APM_Tools.md)
+- [ ] [Infrastructure Monitoring](src/Infrastructure_Monitoring.md)
 - [ ] [Chaos Engineering Principles](src/Chaos_Engineering_Principles.md)
 - [ ] [Deployment Patterns](src/Deployment_Patterns.md)
-- [ ] Infrastructure monitoring
 
 ## Soft Skills & Leadership
 
