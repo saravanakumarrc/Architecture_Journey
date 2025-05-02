@@ -63,6 +63,9 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 - [ ] [Multi-region deployment strategies](src/Multi_Region_Deployment_Strategies.md)
 - [ ] [Cost optimization strategies](src/Cost_Optimization_Strategies.md)
 - [ ] [Infrastructure as Code tools](src/Infrastructure_as_Code_Tools.md)
+- [ ] [Multi-cloud strategy and governance](src/Multi_Cloud_Strategy_and_Governance.md)
+- [ ] [Cloud cost management and FinOps](src/Cloud_Cost_Management_and_FinOps.md)
+- [ ] [Landing zone architecture](src/Landing_Zone_Architecture.md)
 
 ### Basic Understanding Required
 - [ ] [Cloud provider services](src/Cloud_Provider_Services.md)
@@ -102,6 +105,8 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 - [ ] [Authentication and authorization frameworks](src/Authentication_and_Authorization_Frameworks.md)
 - [ ] [Data protection strategies](src/Data_Protection_Strategies.md)
 - [ ] [Security compliance frameworks](src/Security_Compliance_Frameworks.md)
+- [ ] [Identity and access management (IAM)](src/Identity_and_Access_Management.md)
+- [ ] [Cloud security posture management](src/Cloud_Security_Posture_Management.md)
 
 ### Basic Understanding Required
 - [ ] [OWASP security principles](src/OWASP_Security_Principles.md)
@@ -226,6 +231,9 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 - [ ] [Total Cost of Ownership (TCO)](src/Total_Cost_of_Ownership.md)
 - [ ] [Risk Management](src/Risk_Management.md)
 - [ ] [Business Process Engineering](src/Business_Process_Engineering.md)
+- [ ] [Digital transformation strategies](src/Digital_Transformation_Strategies.md)
+- [ ] [Sustainability and green computing](src/Sustainability_and_Green_Computing.md)
+- [ ] [Vendor evaluation and management](src/Vendor_Evaluation_and_Management.md)
 
 ### Basic Understanding Required
 - [ ] [Industry trends and competitive landscape](src/Industry_Trends_and_Competitive_Landscape.md)
