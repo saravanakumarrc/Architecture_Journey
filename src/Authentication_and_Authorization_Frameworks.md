@@ -1,153 +1,235 @@
 # Authentication and Authorization Frameworks
 
-## Authentication Frameworks
+```mermaid
+mindmap
+    root((Auth
+        Framework))
+        (Authentication)
+            [Basic Auth]
+            [OAuth 2.0]
+            [OIDC]
+            [SAML]
+        (Authorization)
+            [RBAC]
+            [ABAC]
+            [PBAC]
+            [ACL]
+        (Identity)
+            [Federation]
+            [SSO]
+            [MFA]
+            [Directory]
+        (Security)
+            [JWT]
+            [PKI]
+            [Encryption]
+            [Sessions]
+```
 
-### 1. OAuth 2.0 + OpenID Connect
+## Core Components
+
+### 1. Authentication Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant A as Application
+    participant I as Identity Provider
+    participant R as Resource
+    
+    U->>A: Access Request
+    A->>I: Auth Request
+    I->>U: Login Form
+    U->>I: Credentials
+    I->>A: Token/Session
+    A->>R: Authorized Request
+    R->>A: Resource
+    A->>U: Response
+```
+
+### 2. Authorization Model
 
 ```mermaid
 graph TB
-    subgraph "OAuth 2.0 Flow"
-        C[Client] --> |1. Auth Request| AS[Auth Server]
-        AS --> |2. Auth Code| C
-        C --> |3. Token Request| AS
-        AS --> |4. Access Token| C
-        C --> |5. API Request| RS[Resource Server]
+    subgraph "Authorization Framework"
+        U[User] --> R[Role]
+        R --> P[Permission]
+        P --> RS[Resource]
         
-        subgraph "Token Types"
-            AT[Access Token]
-            RT[Refresh Token]
-            IT[ID Token]
+        subgraph "Policy Engine"
+            PE[Policy]
+            RE[Rules]
+            AE[Attributes]
         end
     end
 ```
 
-#### Key Components
-- Authorization Server
-- Resource Server
-- Client Application
-- Resource Owner
-- Identity Provider
+## Implementation Checklist
 
-#### Flow Types
-1. Authorization Code Flow
-   - Most secure for web applications
-   - Supports refresh tokens
-   - Backend token storage
+### Authentication Setup
+- [ ] Configure identity provider
+- [ ] Set up MFA
+- [ ] Implement password policies
+- [ ] Configure session management
+- [ ] Set up social auth (if needed)
+- [ ] Implement rate limiting
+- [ ] Configure account lockout
+- [ ] Set up password recovery
+- [ ] Enable audit logging
 
-2. Implicit Flow
-   - Legacy flow for SPAs
-   - No refresh tokens
-   - Less secure
+### Authorization Framework
+- [ ] Define roles and permissions
+- [ ] Implement RBAC/ABAC
+- [ ] Set up policy engine
+- [ ] Configure access controls
+- [ ] Implement token validation
+- [ ] Set up API authorization
+- [ ] Configure resource policies
+- [ ] Enable policy audit
+- [ ] Test authorization rules
 
-3. Client Credentials
-   - Service-to-service
-   - No user interaction
-   - Machine-to-machine
+### Security Configuration
+- [ ] Enable SSL/TLS
+- [ ] Configure token security
+- [ ] Set up key management 
+- [ ] Implement CORS
+- [ ] Configure CSP
+- [ ] Set up WAF
+- [ ] Enable security headers
+- [ ] Configure session security
+- [ ] Regular security reviews
 
-### 2. Role-Based Access Control (RBAC)
+### Operations Setup
+- [ ] Configure monitoring
+- [ ] Set up alerting
+- [ ] Implement logging
+- [ ] Configure backups
+- [ ] Set up DR procedures
+- [ ] Enable audit trails
+- [ ] Configure reporting
+- [ ] Test recovery procedures
+- [ ] Regular maintenance
 
-```mermaid
-graph TB
-    subgraph "RBAC Model"
-        U[Users] --> R[Roles]
-        R --> P[Permissions]
-        P --> R2[Resources]
-        
-        subgraph "Hierarchies"
-            RH[Role Hierarchy]
-            PH[Permission Hierarchy]
-        end
-    end
-```
+## Trade-offs
 
-#### Components
-1. **Users**
-   - Individual actors
-   - Service accounts
-   - External systems
+### Security vs. Usability
+- **High Security**
+  - Pros:
+    * Better protection
+    * Reduced risk
+    * Compliance adherence
+  - Cons:
+    * User friction
+    * More complexity
+    * Higher support needs
 
-2. **Roles**
-   - Collections of permissions
-   - Hierarchical structure
-   - Business functions
+### Centralized vs. Decentralized
+- **Centralized Auth**
+  - Pros:
+    * Easier management
+    * Consistent policy
+    * Better control
+  - Cons:
+    * Single point of failure
+    * Higher impact on issues
+    * Potential bottleneck
 
-3. **Permissions**
-   - Granular access rights
-   - Resource-specific
-   - Action-based
+### Session vs. Token
+- **Token-based**
+  - Pros:
+    * Stateless
+    * Better scalability
+    * More flexibility
+  - Cons:
+    * Token size
+    * Revocation challenges
+    * More complexity
 
-4. **Resources**
-   - Protected assets
-   - API endpoints
-   - Data objects
-
-### 3. Zero Trust Authentication
-
-```mermaid
-graph TB
-    subgraph "Zero Trust Framework"
-        I[Identity] --> C[Context]
-        C --> P[Policy]
-        P --> A[Access Decision]
-        
-        subgraph "Continuous Validation"
-            ID[Identity Verification]
-            CV[Context Validation]
-            RA[Risk Assessment]
-        end
-    end
-```
-
-#### Principles
-1. **Always Verify**
-   - No implicit trust
-   - Continuous authentication
-   - Context-aware
-
-2. **Least Privilege**
-   - Minimal access rights
-   - Time-bound access
-   - Just-in-time privilege
-
-3. **Device Trust**
-   - Device health
-   - Compliance status
-   - Risk assessment
+### Custom vs. Standard
+- **Standard Solutions**
+  - Pros:
+    * Proven security
+    * Better interoperability
+    * More documentation
+  - Cons:
+    * Less flexibility
+    * Feature limitations
+    * Dependency risks
 
 ## Best Practices
 
-### 1. Security
-- Use strong authentication methods
-- Implement MFA where possible
-- Secure token storage
-- Regular access reviews
+1. **Authentication**
+   - Use MFA
+   - Strong password policy
+   - Secure session management
+   - Rate limiting
+   - Account recovery
+   - Audit logging
+   - Regular reviews
 
-### 2. User Experience
-- Minimize authentication steps
-- Clear error messages
-- Self-service capabilities
-- Session management
+2. **Authorization**
+   - Least privilege
+   - Role-based access
+   - Regular audits
+   - Policy documentation
+   - Access reviews
+   - Monitor changes
+   - Test policies
 
-### 3. Operations
-- Monitoring and alerting
-- Audit logging
-- Performance optimization
-- Scalability planning
+3. **Security**
+   - TLS everywhere
+   - Secure storage
+   - Token protection
+   - Key management
+   - Regular updates
+   - Security testing
+   - Compliance checks
 
-### 4. Compliance
-- Data protection
-- Privacy regulations
-- Industry standards
-- Regular audits
+4. **Operations**
+   - Monitor access
+   - Alert on issues
+   - Log security events
+   - Regular backups
+   - DR testing
+   - Team training
+   - Documentation
 
-## Decision Framework
+## Security Controls Matrix
 
-| Factor | Consideration | Example Use Case |
-|--------|---------------|------------------|
-| User Type | Internal/External | Employee Portal |
-| Security Level | Low/Medium/High | Financial Data |
-| Integration | Single/Multiple IdPs | B2B Platform |
-| Compliance | Regulations | Healthcare System |
-| Scale | User Volume | Public API |
+| Control | Implementation | Monitoring | Review Frequency |
+|---------|----------------|------------|-----------------|
+| Authentication | MFA + Password | Real-time | Daily |
+| Authorization | RBAC + ABAC | Real-time | Weekly |
+| Session | Token + Timeout | Real-time | Daily |
+| Access Control | Policy-based | Real-time | Weekly |
+| Encryption | TLS 1.3 + AES | Daily | Monthly |
+| Audit | Full logging | Real-time | Weekly |
 
-Remember: Authentication and authorization should be treated as foundational architectural components, not just implementation details.
+## Common Attack Vectors
+
+1. **Authentication Attacks**
+   - Brute force
+   - Credential stuffing
+   - Password spraying
+   - Session hijacking
+   - Token theft
+
+2. **Authorization Attacks**
+   - Privilege escalation
+   - Insecure direct object references
+   - Missing function level access control
+   - Unauthorized API access
+
+3. **Infrastructure Attacks**
+   - Man-in-the-middle
+   - SSL stripping
+   - DNS hijacking
+   - DDoS
+
+4. **Application Attacks**
+   - XSS
+   - CSRF
+   - Injection
+   - Parameter tampering
+
+Remember: Security is a continuous process. Regularly review and update your authentication and authorization frameworks to address new threats and maintain strong security posture.

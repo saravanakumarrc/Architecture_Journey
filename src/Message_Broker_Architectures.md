@@ -8,309 +8,206 @@ mindmap
             [Pub/Sub]
             [Point-to-Point]
             [Request/Reply]
-            [Competing Consumers]
+            [Push/Pull]
         (Features)
             [Reliability]
-            [Scalability]
-            [Ordering]
             [Persistence]
-        (Components)
-            [Producers]
-            [Consumers]
-            [Topics/Queues]
-            [Dead Letter]
-        (Technologies)
-            [Kafka]
-            [RabbitMQ]
-            [Azure ServiceBus]
-            [AWS SQS/SNS]
+            [Routing]
+            [Transformation]
+        (Qualities)
+            [Durability]
+            [Ordering]
+            [Performance]
+            [Scalability]
+        (Security)
+            [Authentication]
+            [Authorization]
+            [Encryption]
 ```
 
-## Core Message Patterns
-
-### 1. Publish/Subscribe Pattern
+## Core Components
 
 ```mermaid
-graph LR
-    subgraph "Pub/Sub Architecture"
-        P1[Producer 1] --> T[Topic]
-        P2[Producer 2] --> T
-        T --> S1[Subscription 1]
-        T --> S2[Subscription 2]
-        T --> S3[Subscription 3]
-    end
-```
-
-Implementation Example (using Azure Service Bus):
-```typescript
-// Message publisher with retry policy
-class EventPublisher {
-    constructor(
-        private serviceBusClient: ServiceBusClient,
-        private topicName: string
-    ) {}
-
-    async publishEvent<T extends DomainEvent>(
-        event: T,
-        options: PublishOptions = {}
-    ): Promise<void> {
-        const sender = this.serviceBusClient.createSender(this.topicName);
-        
-        try {
-            const message = {
-                body: event,
-                contentType: 'application/json',
-                messageId: uuidv4(),
-                correlationId: options.correlationId,
-                subject: event.eventType,
-                userProperties: {
-                    eventType: event.eventType,
-                    version: '1.0',
-                    source: 'order-service'
-                }
-            };
-
-            await this.executeWithRetry(() => 
-                sender.sendMessages(message)
-            );
-        } finally {
-            await sender.close();
-        }
-    }
-
-    private async executeWithRetry(
-        operation: () => Promise<void>
-    ): Promise<void> {
-        const retryOptions = {
-            maxRetries: 3,
-            delay: 1000,
-            backoffCoefficient: 2
-        };
-
-        let attempt = 0;
-        while (attempt <= retryOptions.maxRetries) {
-            try {
-                await operation();
-                return;
-            } catch (error) {
-                if (attempt === retryOptions.maxRetries) {
 graph TB
-    subgraph "Message Components"
-        H[Header] --> M[Metadata]
-        M --> P[Payload]
-        P --> F[Footer]
+    subgraph "Message Broker Architecture"
+        P[Publishers] --> B[Broker]
+        B --> S[Subscribers]
         
-        subgraph "Attributes"
-            ID[Message ID]
-            TS[Timestamp]
-            COR[Correlation ID]
-            TTL[Time to Live]
+        subgraph "Broker Components"
+            Q[Queues]
+            T[Topics]
+            E[Exchange]
+            R[Router]
         end
-    end
-```
-
-### 2. Message Properties
-1. **Required Properties**
-   - Message ID
-   - Timestamp
-   - Content type
-   - Content encoding
-
-2. **Optional Properties**
-   - Correlation ID
-   - Reply to
-   - Expiration
-   - Priority
-
-3. **Custom Headers**
-   - Business metadata
-   - Routing info
-   - Tracking data
-   - Version info
-
-## Reliability Patterns
-
-### 1. Message Delivery
-
-```mermaid
-graph TB
-    subgraph "Delivery Guarantees"
-        AO[At-least-once] --> ACK[Acknowledgment]
-        MO[At-most-once] --> DLQ[Dead Letter]
-        EO[Exactly-once] --> DEDUP[Deduplication]
         
         subgraph "Features"
-            PERS[Persistence]
-            REPL[Replication]
-            TRAN[Transactions]
+            D[Dead Letter]
+            F[Filters]
+            TF[Transformers]
+            M[Monitors]
         end
     end
 ```
 
-#### Delivery Strategies
-| Strategy | Guarantee | Performance | Use Case |
-|----------|-----------|-------------|----------|
-| At-least-once | High | Medium | Critical Data |
-| At-most-once | Low | High | Metrics/Logs |
-| Exactly-once | Very High | Low | Transactions |
+## Implementation Checklist
 
-### 2. Error Handling
+### Reliability Features
+- [ ] Configure message persistence
+- [ ] Set up dead letter queues
+- [ ] Implement retry mechanisms
+- [ ] Configure message expiry
+- [ ] Set up acknowledgments
+- [ ] Implement error handling
+- [ ] Configure failover
+- [ ] Set up monitoring
+- [ ] Test failure scenarios
+
+### Performance Optimization
+- [ ] Configure queue sizes
+- [ ] Set message TTL
+- [ ] Optimize batch sizes
+- [ ] Configure prefetch counts
+- [ ] Set up connection pools
+- [ ] Implement caching
+- [ ] Configure thread pools
+- [ ] Monitor throughput
+- [ ] Test performance
+
+### Security Configuration
+- [ ] Set up authentication
+- [ ] Configure authorization
+- [ ] Enable TLS/SSL
+- [ ] Implement access controls
+- [ ] Set up encryption
+- [ ] Configure network security
+- [ ] Enable audit logging
+- [ ] Regular security reviews
+- [ ] Test security measures
+
+### Monitoring Setup
+- [ ] Configure health checks
+- [ ] Set up metrics collection
+- [ ] Implement logging
+- [ ] Configure alerts
+- [ ] Monitor queue depths
+- [ ] Track message rates
+- [ ] Set up dashboards
+- [ ] Configure tracing
+- [ ] Test monitoring systems
+
+## Trade-offs
+
+### Reliability vs. Performance
+- **High Reliability**
+  - Pros:
+    * Guaranteed delivery
+    * No message loss
+    * Better consistency
+  - Cons:
+    * Higher latency
+    * More resource usage
+    * Increased complexity
+
+### Scalability vs. Consistency
+- **High Scalability**
+  - Pros:
+    * Better throughput
+    * Improved performance
+    * More flexibility
+  - Cons:
+    * Potential ordering issues
+    * Complex state management
+    * More failure scenarios
+
+### Push vs. Pull
+- **Push Model**
+  - Pros:
+    * Real-time delivery
+    * Lower latency
+    * Better for events
+  - Cons:
+    * Consumer overload risk
+    * More complex error handling
+    * Higher resource usage
+
+### Persistence vs. Speed
+- **Full Persistence**
+  - Pros:
+    * No message loss
+    * Better recovery
+    * Message replay
+  - Cons:
+    * Higher latency
+    * More storage needed
+    * Increased cost
+
+## Message Flow Patterns
 
 ```mermaid
-graph LR
-    subgraph "Error Management"
-        F[Failure] --> R[Retry]
-        R --> D[DLQ]
-        D --> P[Process/Alert]
+flowchart TB
+    subgraph "Common Patterns"
+        P[Publisher] --> E{Exchange}
+        E --> Q1[Queue 1]
+        E --> Q2[Queue 2]
+        Q1 --> C1[Consumer 1]
+        Q2 --> C2[Consumer 2]
         
-        subgraph "Strategies"
-            EXP[Exponential Backoff]
-            MAX[Max Retries]
-            ALT[Alternative Route]
+        subgraph "Message Handling"
+            V[Validate]
+            T[Transform]
+            R[Route]
+            D[Deliver]
         end
     end
 ```
 
-## Performance Optimization
+## Best Practices
 
-### 1. Scaling Patterns
-
-```mermaid
-graph TB
-    subgraph "Scaling Architecture"
-        P[Partitioning] --> C[Clustering]
-        C --> R[Replication]
-        R --> L[Load Balancing]
-        
-        subgraph "Methods"
-            HP[Horizontal]
-            VP[Vertical]
-            GEO[Geographic]
-        end
-    end
-```
-
-### 2. Performance Checklist
-- [ ] Message batching
-- [ ] Consumer scaling
-- [ ] Producer throttling
-- [ ] Connection pooling
-- [ ] Network optimization
-- [ ] Memory management
-- [ ] Disk I/O tuning
-- [ ] Monitoring setup
-
-## Monitoring Framework
-
-### 1. Key Metrics
-
-```mermaid
-graph TB
-    subgraph "Monitoring System"
-        T[Throughput] --> L[Latency]
-        L --> Q[Queue Length]
-        Q --> E[Errors]
-        
-        subgraph "Alerts"
-            QF[Queue Full]
-            DL[Dead Letter]
-            SL[SLA Breach]
-        end
-    end
-```
-
-### 2. Monitoring Checklist
-- [ ] Message rates
-- [ ] Queue depths
-- [ ] Consumer lag
-- [ ] Error rates
-- [ ] Resource usage
-- [ ] Network latency
-- [ ] Disk usage
-- [ ] Alert thresholds
-
-## Security Framework
-
-### 1. Security Architecture
-
-```mermaid
-graph TB
-    subgraph "Security Layers"
-        A[Authentication] --> Z[Authorization]
-        Z --> E[Encryption]
-        E --> A[Auditing]
-        
-        subgraph "Controls"
-            AC[Access Control]
-            TLS[Transport Security]
-            LOG[Logging]
-        end
-    end
-```
-
-### 2. Security Checklist
-- [ ] TLS configuration
-- [ ] Authentication setup
-- [ ] Authorization rules
-- [ ] Message encryption
-- [ ] Network security
-- [ ] Audit logging
-- [ ] Access controls
-- [ ] Compliance checks
-
-## Implementation Guidance
-
-### 1. Best Practices
 1. **Message Design**
-   - Schema versioning
-   - Backward compatibility
-   - Forward compatibility
-   - Message validation
+   - Keep messages small
+   - Use proper schemas
+   - Include metadata
+   - Version messages
+   - Handle duplicates
+   - Plan for failures
+   - Document formats
 
-2. **Error Handling**
-   - Retry policies
-   - Dead letter queues
-   - Error logging
-   - Alert mechanisms
+2. **Queue Management**
+   - Set size limits
+   - Monitor depths
+   - Configure TTL
+   - Handle dead letters
+   - Manage connections
+   - Regular cleanup
+   - Monitor performance
 
-3. **Performance**
-   - Connection pooling
-   - Message batching
-   - Prefetch settings
-   - Resource limits
+3. **Error Handling**
+   - Implement retries
+   - Log failures
+   - Handle timeouts
+   - Manage poison messages
+   - Configure alerts
+   - Document procedures
+   - Test recovery
 
-### 2. Anti-patterns to Avoid
-- Direct broker-to-broker communication
-- Synchronous request-reply over queues
-- Large message payloads
-- Queue proliferation
-- Missing message TTL
-- Lack of monitoring
-- Insufficient security
-- No message schema
+4. **Operational Excellence**
+   - Monitor actively
+   - Scale proactively
+   - Backup regularly
+   - Test failover
+   - Document procedures
+   - Train team members
+   - Regular reviews
 
-## Decision Framework
+## Performance Metrics Matrix
 
-### 1. Broker Selection
-| Feature | RabbitMQ | Kafka | Azure Service Bus |
-|---------|----------|-------|-------------------|
-| Patterns | All | Streaming | All |
-| Scale | Medium | Very High | High |
-| Latency | Very Low | Low | Low |
-| Features | Rich | Basic | Rich |
-| Management | Good | Complex | Excellent |
+| Aspect | Metric | Target | Alert Threshold |
+|--------|--------|--------|----------------|
+| Latency | Message Delay | <100ms | >500ms |
+| Throughput | Messages/sec | >1000 | <500 |
+| Queue Depth | Message Count | <10000 | >50000 |
+| Error Rate | Failed/Total | <0.1% | >1% |
+| CPU Usage | Utilization | <70% | >85% |
+| Memory | Available | >30% | <15% |
 
-### 2. Architecture Decisions
-1. **Message Flow**
-   - Routing patterns
-   - Exchange types
-   - Queue design
-   - Consumer groups
-
-2. **Infrastructure**
-   - High availability
-   - Disaster recovery
-   - Geographic distribution
-   - Resource sizing
-
-Remember: Message broker architectures should focus on reliability, scalability, and manageability while ensuring proper message delivery guarantees.
+Remember: Message broker architecture choices significantly impact system behavior. Consider your use cases carefully and choose patterns that match your requirements for reliability, performance, and scalability.

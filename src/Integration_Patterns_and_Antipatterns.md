@@ -1,4 +1,4 @@
-# Integration Patterns and Anti-patterns
+# Integration Patterns and Antipatterns
 
 ```mermaid
 mindmap
@@ -12,260 +12,230 @@ mindmap
         (Asynchronous)
             [Message Queue]
             [Pub/Sub]
-            [Event Streaming]
+            [Event Stream]
             [Webhooks]
-        (Integration Styles)
-            [Point-to-Point]
-            [Hub-and-Spoke]
-            [Message Bus]
-            [Mesh]
-        (Data Patterns)
+        (Data)
             [File Transfer]
             [Shared Database]
-            [Remote Query]
-            [Data Sync]
+            [Data Replication]
+            [ETL]
+        (Patterns)
+            [Gateway]
+            [Facade]
+            [Adapter]
+            [Mediator]
 ```
 
-## Common Integration Patterns
+## Core Integration Styles
 
-### 1. Gateway Pattern
+### 1. API Integration
 
 ```mermaid
 graph TB
-    subgraph "Gateway Integration"
-        C[Client] --> G[Gateway]
+    subgraph "API Integration Patterns"
+        API[API Gateway] --> S1[Service 1]
+        API --> S2[Service 2]
+        API --> S3[Service 3]
         
-        subgraph "Backend Systems"
-            G --> S1[Legacy System]
-            G --> S2[Modern API]
-            G --> S3[Third Party]
-        end
-        
-        subgraph "Cross Cutting"
-            SEC[Security]
-            TRANS[Translation]
-            MON[Monitoring]
-            G --> SEC
-            G --> TRANS
-            G --> MON
-        end
-    end
-```
-
-Implementation Example:
-```typescript
-// Gateway with protocol translation
-class IntegrationGateway {
-    private legacyClient: SoapClient;
-    private restClient: RestClient;
-    private messageQueue: MessageQueue;
-
-    async processOrder(order: Order): Promise<OrderResult> {
-        try {
-            // Call legacy SOAP service
-            const inventoryStatus = await this.legacyClient.checkInventory({
-                sku: order.sku,
-                quantity: order.quantity
-            });
-
-            // Call modern REST API
-            const pricingInfo = await this.restClient.getPricing(order.sku);
-
-            // Publish event to message queue
-            await this.messageQueue.publish('order.created', {
-                orderId: order.id,
-                status: 'processing'
-            });
-
-            return {
-                status: 'success',
-                inventory: inventoryStatus,
-                pricing: pricingInfo
-            };
-        } catch (error) {
-            // Error translation
-            throw new GatewayError(this.translateError(error));
-        }
-    }
-}
-```
-
-### 2. Message Bus Pattern
-
-```mermaid
-graph LR
-    subgraph "Enterprise Service Bus"
-        S1[Service 1] --> MB[Message Bus]
-        S2[Service 2] --> MB
-        S3[Service 3] --> MB
-        MB --> S1
-        MB --> S2
-        MB --> S3
-        
-        subgraph "Bus Features"
+        subgraph "Components"
             R[Routing]
             T[Transform]
-            M[Mediation]
+            V[Validate]
+            C[Cache]
         end
     end
-```
-
-## Common Anti-patterns
-
-### 1. Direct Database Integration
-❌ **Problem**: Services directly accessing each other's databases
-✅ **Solution**: Use API contracts and event-driven integration
-
-```mermaid
-graph TB
-    subgraph "Anti-pattern"
-        S1[Service 1] --> DB2[(Service 2 DB)]
-        S2[Service 2] --> DB1[(Service 1 DB)]
-    end
-    
-    subgraph "Better Pattern"
-        SS1[Service 1] --> API2[Service 2 API]
-        SS2[Service 2] --> API1[Service 1 API]
-    end
-```
-
-### 2. Chatty Integration
-❌ **Problem**: Too many small network calls between services
-✅ **Solution**: Batch operations and use appropriate granularity
-
-Example Fix:
-```typescript
-// Before: Chatty integration
-async function processOrders(orders: Order[]) {
-    for (const order of orders) {
-        await validateOrder(order);
-        await checkInventory(order);
-        await processPayment(order);
-    }
-}
-
-// After: Batched operations
-async function processOrders(orders: Order[]) {
-    const validationResults = await validateOrders(orders);
-    const inventoryResults = await checkInventoryBatch(orders);
-    const paymentResults = await processPaymentsBatch(orders);
-    
-    return orders.map(order => ({
-        order,
-        validation: validationResults[order.id],
-        inventory: inventoryResults[order.id],
-        payment: paymentResults[order.id]
-    }));
-}
-```
-
-### 3. Point-to-Point Integration Hell
-❌ **Problem**: Direct dependencies between all services
-✅ **Solution**: Use message broker or event bus
-
-```mermaid
-graph TD
-    subgraph "Anti-pattern: Point-to-Point"
-        A1[Service A] --> B1[Service B]
-        A1 --> C1[Service C]
-        B1 --> C1
-        B1 --> D1[Service D]
-        C1 --> D1
-    end
-    
-    subgraph "Better: Event-Driven"
-        A2[Service A] --> E[Event Bus]
-        B2[Service B] --> E
-        E --> C2[Service C]
-        E --> D2[Service D]
-    end
-```
-
-## Integration Strategies
-
-### 1. File-Based Integration
-Best for:
-- Batch processing
-- Large data transfers
-- Legacy system integration
-- Offline processing
-
-```typescript
-// File-based integration with watch pattern
-class FileIntegrator {
-    private watchDir: string;
-    private processedDir: string;
-    private errorDir: string;
-
-    async watchAndProcess(): Promise<void> {
-        const watcher = fs.watch(this.watchDir);
-        
-        for await (const { filename } of watcher) {
-            try {
-                const data = await this.readAndValidate(filename);
-                await this.processData(data);
-                await this.moveToProcessed(filename);
-            } catch (error) {
-                await this.moveToError(filename);
-                this.logError(filename, error);
-            }
-        }
-    }
-}
 ```
 
 ### 2. Event-Driven Integration
-Best for:
-- Real-time updates
-- Loose coupling
-- Scalable systems
-- Complex workflows
 
-```typescript
-// Event-driven integration with Azure Event Grid
-import { EventGridPublisherClient } from "@azure/eventgrid";
-
-class EventIntegrator {
-    private client: EventGridPublisherClient;
-
-    async publishEvents(events: BusinessEvent[]): Promise<void> {
-        const eventGridEvents = events.map(event => ({
-            eventType: event.type,
-            subject: `/${event.domain}/${event.id}`,
-            dataVersion: "1.0",
-            data: event.payload,
-            eventTime: new Date()
-        }));
-
-        await this.client.send(eventGridEvents);
-    }
-}
+```mermaid
+graph TB
+    subgraph "Event Architecture"
+        P1[Producer 1] --> B[Event Bus]
+        P2[Producer 2] --> B
+        B --> C1[Consumer 1]
+        B --> C2[Consumer 2]
+        
+        subgraph "Event Flow"
+            E[Event]
+            F[Filter]
+            T[Transform]
+            D[Deliver]
+        end
+    end
 ```
+
+## Implementation Checklist
+
+### API Integration
+- [ ] Define API contracts
+- [ ] Implement versioning
+- [ ] Set up authentication
+- [ ] Configure rate limiting
+- [ ] Implement monitoring
+- [ ] Set up documentation
+- [ ] Configure caching
+- [ ] Error handling
+- [ ] Performance optimization
+
+### Event Integration
+- [ ] Define event schema
+- [ ] Set up message broker
+- [ ] Configure dead letters
+- [ ] Implement retry logic
+- [ ] Set up monitoring
+- [ ] Configure error handling
+- [ ] Event versioning
+- [ ] Testing strategy
+- [ ] Performance tuning
+
+### Data Integration
+- [ ] Define data models
+- [ ] Set up synchronization
+- [ ] Configure validation
+- [ ] Implement transforms
+- [ ] Set up monitoring
+- [ ] Error handling
+- [ ] Data quality checks
+- [ ] Recovery process
+- [ ] Performance metrics
+
+### Security Setup
+- [ ] Authentication
+- [ ] Authorization
+- [ ] Encryption
+- [ ] API security
+- [ ] Network security
+- [ ] Audit logging
+- [ ] Secret management
+- [ ] Security testing
+- [ ] Compliance checks
+
+## Common Antipatterns
+
+### Integration Antipatterns to Avoid
+
+1. **Direct Database Integration**
+   - Tight coupling
+   - Schema dependency
+   - Versioning issues
+   - Performance impact
+   - Security risks
+
+2. **Point-to-Point Integration**
+   - Limited scalability
+   - High maintenance
+   - Complex dependencies
+   - Difficult changes
+   - Poor reusability
+
+3. **Shared Code Libraries**
+   - Version conflicts
+   - Deployment coupling
+   - Language dependency
+   - Update complexity
+   - Testing challenges
+
+4. **Big Bang Integration**
+   - High risk
+   - Complex rollback
+   - Long testing cycles
+   - Resource intensive
+   - Coordination overhead
+
+## Trade-offs
+
+### Synchronous vs. Asynchronous
+- **Synchronous Integration**
+  - Pros:
+    * Immediate response
+    * Simpler error handling
+    * Better consistency
+  - Cons:
+    * Higher coupling
+    * Less scalable
+    * Availability impact
+
+### Centralized vs. Distributed
+- **Centralized Integration**
+  - Pros:
+    * Better control
+    * Easier monitoring
+    * Consistent policies
+  - Cons:
+    * Single point of failure
+    * Performance bottleneck
+    * Scale limitations
+
+### Custom vs. Standard
+- **Custom Integration**
+  - Pros:
+    * Perfect fit
+    * Full control
+    * Specific features
+  - Cons:
+    * Higher cost
+    * More maintenance
+    * Limited reuse
+
+### Real-time vs. Batch
+- **Real-time Integration**
+  - Pros:
+    * Immediate updates
+    * Better user experience
+    * Fresh data
+  - Cons:
+    * Higher complexity
+    * More resources
+    * Higher cost
 
 ## Best Practices
 
 1. **Design Principles**
-   - Keep integration simple and focused
-   - Use appropriate synchronization patterns
-   - Implement proper error handling
-   - Design for failure
+   - Loose coupling
+   - High cohesion
+   - Clear contracts
+   - Error handling
+   - Versioning
+   - Documentation
+   - Testing strategy
 
-2. **Security Considerations**
-   - Implement proper authentication
-   - Use secure protocols
-   - Apply principle of least privilege
-   - Monitor integration points
+2. **Security**
+   - Authentication
+   - Authorization
+   - Encryption
+   - Audit logging
+   - Access control
+   - Monitoring
+   - Regular reviews
 
-3. **Performance Optimization**
-   - Use appropriate batch sizes
-   - Implement caching where possible
-   - Monitor integration latency
-   - Optimize payload size
+3. **Performance**
+   - Caching strategy
+   - Load balancing
+   - Throttling
+   - Monitoring
+   - Optimization
+   - Scalability
+   - Benchmarking
 
-4. **Monitoring and Debugging**
-   - Implement correlation IDs
-   - Log integration events
-   - Monitor integration health
-   - Set up alerts for failures
+4. **Operations**
+   - Monitoring setup
+   - Alert configuration
+   - Backup strategy
+   - Recovery plans
+   - Documentation
+   - Training
+   - Regular reviews
 
-Remember: Integration patterns should be chosen based on specific requirements, considering factors like reliability, latency, and complexity. Avoid anti-patterns by understanding their implications and using appropriate alternatives.
+## Integration Metrics Matrix
+
+| Category | Metric | Target | Alert Level |
+|----------|--------|--------|-------------|
+| Latency | Response Time | <200ms | >500ms |
+| Reliability | Success Rate | >99.9% | <99% |
+| Throughput | Requests/sec | >1000 | <500 |
+| Error Rate | Failed/Total | <0.1% | >1% |
+| Availability | Uptime | >99.95% | <99.9% |
+| Security | Auth Success | >99.99% | <99.9% |
+
+Remember: Choose integration patterns based on your specific requirements and constraints. Avoid antipatterns by understanding their implications and following established best practices.
