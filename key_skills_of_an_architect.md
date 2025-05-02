@@ -47,7 +47,6 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 - [ ] [Security by Design Principles](src/Security_by_Design_Principles.md)
 
 ### Basic Understanding Required
-- [ ] Low-level programming concepts
 - [ ] [Multiple programming paradigms](src/Programming_Paradigms.md)
 - [ ] [Memory management concepts](src/Memory_Management_Concepts.md)
 - [ ] [Operating system fundamentals](src/Operating_System_Fundamentals.md)
@@ -188,14 +187,9 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 ## Domain Knowledge
 
 ### Deep Understanding Required
-- [ ] Business domain concepts for your industry
 - [ ] [Domain-driven design principles](src/Domain_Driven_Design.md)
 - [ ] [Business process modeling](src/Business_Process_Modeling.md)
 
-### Basic Understanding Required
-- [ ] Industry trends and competitive landscape
-- [ ] Regulatory environment for your domain
-- [ ] Market dynamics affecting technical choices
 
 ## Emerging Technologies
 
@@ -220,24 +214,21 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 - [ ] [SLI/SLO/SLA Frameworks](src/SLI_SLO_SLA_Frameworks.md)
 
 ### Basic Understanding Required
-- [ ] Enterprise architecture frameworks (TOGAF, Zachman, etc.)
-- [ ] Industry-specific technical standards
-- [ ] Open-source governance
+- [ ] [Enterprise architecture frameworks (TOGAF, Zachman, etc.)](src/Enterprise_Architecture_Frameworks.md)
+- [ ] [Industry-specific technical standards](src/Industry_Specific_Technical_Standards.md)
+- [ ] [Open-source governance](src/Open_Source_Governance.md)
 
 ## Business & Industry Knowledge
 
 ### Deep Understanding Required
-- [ ] [Industry Trends and Competitive Landscape](src/Industry_Trends_and_Competitive_Landscape.md)
-- [ ] [Regulatory Environment](src/Regulatory_Environment.md)
-- [ ] [Market Dynamics Affecting Technical Choices](src/Market_Dynamics_Affecting_Technical_Choices.md)
-- [ ] Business Strategy and Goals
-- [ ] Return on Investment (ROI)
-- [ ] Total Cost of Ownership (TCO)
-- [ ] Risk Management
-- [ ] Business Process Engineering
+- [ ] [Business Strategy and Goals](src/Business_Strategy_and_Goals.md)
+- [ ] [Return on Investment (ROI)](src/Return_on_Investment.md)
+- [ ] [Total Cost of Ownership (TCO)](src/Total_Cost_of_Ownership.md)
+- [ ] [Risk Management](src/Risk_Management.md)
+- [ ] [Business Process Engineering](src/Business_Process_Engineering.md)
 
 ### Basic Understanding Required
-- [ ] Industry trends and competitive landscape
-- [ ] Regulatory environment for your domain
-- [ ] Market dynamics affecting technical choices
+- [ ] [Industry trends and competitive landscape](src/Industry_Trends_and_Competitive_Landscape.md)
+- [ ] [Regulatory environment for your domain](src/Regulatory_Environment.md)
+- [ ] [Market dynamics affecting technical choices](src/Market_Dynamics_Affecting_Technical_Choices.md)
 
