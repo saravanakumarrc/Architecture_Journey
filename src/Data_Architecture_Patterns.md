@@ -1,243 +1,272 @@
 # Data Architecture Patterns
 
-## Core Data Patterns
+## Core Concepts Overview
 
-### 1. CQRS (Command Query Responsibility Segregation)
+```mermaid
+mindmap
+    root((Data
+        Architecture))
+        (Storage Patterns)
+            [RDBMS]
+            [NoSQL]
+            [Data Lake]
+            [Data Warehouse]
+        (Access Patterns)
+            [CQRS]
+            [Event Sourcing]
+            [Polyglot Persistence]
+            [Sharding]
+        (Integration)
+            [ETL]
+            [Change Data Capture]
+            [Data Streaming]
+            [Replication]
+        (Management)
+            [Governance]
+            [Security]
+            [Monitoring]
+            [Lifecycle]
+```
+
+## Azure Implementation Patterns
+
+### 1. CQRS with Azure Services
 
 ```mermaid
 graph TB
-    subgraph "CQRS Architecture"
-        C[Client] --> CM[Command Model]
-        C --> QM[Query Model]
+    subgraph "Write Side"
+        W[Web API] --> EH[Event Hub]
+        EH --> AF[Azure Function]
+        AF --> SQL[(Azure SQL)]
+    end
+    
+    subgraph "Read Side"
+        R[Web API] --> COSMOS[(Cosmos DB)]
+        AF --> COSMOS
+    end
+    
+    subgraph "Analytics"
+        EH --> SA[Stream Analytics]
+        SA --> DL[Data Lake]
+    end
+```
+
+### 2. Data Lake Architecture
+
+```mermaid
+graph TB
+    subgraph "Data Lake Zones"
+        R[Raw Zone] --> P[Processing Zone]
+        P --> C[Curated Zone]
+        C --> S[Serving Zone]
         
-        CM --> WDB[(Write DB)]
-        QM --> RDB[(Read DB)]
-        
-        subgraph "Sync Process"
-            WDB --> SYNC[Sync/ETL]
-            SYNC --> RDB
+        subgraph "Data Processing"
+            DP1[Data Factory]
+            DP2[Databricks]
+            DP3[Synapse]
         end
     end
 ```
 
-#### Key Components
-1. **Command Side**
-   - Write operations
-   - Strong consistency
-   - Transaction support
-   - Data validation
+## Implementation Examples
 
-2. **Query Side**
-   - Read operations
-   - Denormalized views
-   - Performance optimized
-   - Eventual consistency
+### 1. CQRS Pattern
+```typescript
+// Example: CQRS implementation with Azure
+class OrderService {
+    constructor(
+        private writeDb: SqlDatabase,
+        private readDb: CosmosClient,
+        private eventHub: EventHubProducerClient
+    ) {}
+    
+    async createOrder(order: Order): Promise<void> {
+        // Write to SQL Database
+        await this.writeDb.orders.create(order);
+        
+        // Publish event
+        await this.eventHub.sendBatch([{
+            body: {
+                type: 'OrderCreated',
+                data: order
+            }
+        }]);
+    }
+    
+    async getOrder(orderId: string): Promise<Order> {
+        // Read from Cosmos DB
+        const container = this.readDb.database('orders').container('orders');
+        const { resource } = await container.item(orderId).read();
+        return resource;
+    }
+}
+```
 
 ### 2. Event Sourcing Pattern
-
-```mermaid
-graph LR
-    subgraph "Event Sourcing"
-        E[Events] --> ES[Event Store]
-        ES --> S[Snapshots]
-        ES --> P1[Projection 1]
-        ES --> P2[Projection 2]
-        ES --> P3[Projection 3]
-    end
-```
-
-#### Components
-1. **Event Store**
-   - Immutable log
-   - Sequential events
-   - Version tracking
-   - Event metadata
-
-2. **Projections**
-   - Specialized views
-   - Real-time processing
-   - Custom aggregations
-   - State reconstruction
-
-3. **Snapshots**
-   - Performance optimization
-   - State caching
-   - Recovery point
-   - Version control
-
-### 3. Polyglot Persistence
-
-```mermaid
-graph TB
-    subgraph "Polyglot Storage"
-        direction TB
+```typescript
+// Example: Event Sourcing with Event Hub and Cosmos DB
+class EventSourcedOrder {
+    private events: OrderEvent[] = [];
+    
+    async apply(event: OrderEvent): Promise<void> {
+        // Store event
+        await this.eventHub.sendBatch([{
+            body: event
+        }]);
         
-        subgraph "Data Types"
-            T1[Transactional]
-            T2[Document]
-            T3[Search]
-            T4[Cache]
-        end
+        // Update read model
+        await this.updateReadModel(event);
         
-        T1 --> DB1[(PostgreSQL)]
-        T2 --> DB2[(MongoDB)]
-        T3 --> DB3[(Elasticsearch)]
-        T4 --> DB4[(Redis)]
-    end
-```
-
-#### Storage Selection Matrix
-
-| Data Type | Example Store | Use Case | Trade-offs |
-|-----------|--------------|-----------|------------|
-| Relational | PostgreSQL | ACID Transactions | Schema Rigidity |
-| Document | MongoDB | Flexible Schema | Eventually Consistent |
-| Search | Elasticsearch | Full-text Search | Index Overhead |
-| Cache | Redis | Fast Access | Volatile Storage |
-
-### 4. Data Lake Architecture
-
-```mermaid
-graph TB
-    subgraph "Data Lake"
-        I[Ingestion] --> R[Raw Zone]
-        R --> P[Processing]
-        P --> C[Curated Zone]
-        C --> A[Analytics]
+        // Update in-memory state
+        this.events.push(event);
+    }
+    
+    private async updateReadModel(event: OrderEvent): Promise<void> {
+        const container = this.cosmosClient.database('orders').container('order-view');
         
-        subgraph "Zones"
-            RZ[Raw]
-            ST[Staging]
-            CU[Curated]
-        end
-    end
+        switch(event.type) {
+            case 'OrderCreated':
+                await container.items.create(event.data);
+                break;
+            case 'OrderUpdated':
+                await container.item(event.data.id).replace(event.data);
+                break;
+            // ... handle other events
+        }
+    }
+}
 ```
 
-#### Zone Characteristics
-1. **Raw Zone**
-   - Original format
-   - Complete history
-   - Immutable data
-   - Schema-less
+## Implementation Checklist
 
-2. **Processing Zone**
-   - Data transformation
-   - Quality checks
-   - Schema enforcement
-   - Temporary storage
+### Design Phase
+- [ ] Choose data storage types
+- [ ] Define data access patterns
+- [ ] Plan data partitioning
+- [ ] Design backup strategy
+- [ ] Define SLAs
+- [ ] Plan monitoring
 
-3. **Curated Zone**
-   - Business ready
-   - Optimized format
-   - Query friendly
-   - Analytics ready
+### Development Phase
+- [ ] Implement data access layer
+- [ ] Set up replication
+- [ ] Configure monitoring
+- [ ] Implement caching
+- [ ] Set up backup/restore
+- [ ] Configure security
 
-## Data Integration Patterns
+### Operations Phase
+- [ ] Monitor performance
+- [ ] Optimize queries
+- [ ] Manage backups
+- [ ] Handle scaling
+- [ ] Maintain security
+- [ ] Update documentation
 
-### 1. ETL/ELT Pipeline
+## Azure Data Services
 
-```mermaid
-graph LR
-    subgraph "Data Pipeline"
-        E[Extract] --> T[Transform]
-        T --> L[Load]
-        
-        subgraph "Quality Checks"
-            V[Validation]
-            C[Cleansing]
-            S[Standardization]
-        end
-    end
-```
+### 1. Operational Databases
+- **Azure SQL Database**
+  - Managed SQL Server
+  - Elastic pools
+  - Geo-replication
+  - Automatic tuning
 
-### 2. Change Data Capture
+- **Cosmos DB**
+  - Multi-model database
+  - Global distribution
+  - Multiple consistency levels
+  - Automatic scaling
 
-```mermaid
-graph TB
-    subgraph "CDC Flow"
-        SRC[Source DB] --> LOG[Transaction Log]
-        LOG --> CAP[Capture Process]
-        CAP --> Q[Message Queue]
-        Q --> CONS[Consumers]
-    end
-```
+### 2. Analytics
+- **Azure Synapse**
+  - Data warehousing
+  - Big data analytics
+  - Real-time analytics
+  - Integrated environment
 
-### 3. Data Mesh
-
-```mermaid
-graph TB
-    subgraph "Data Mesh"
-        D1[Domain 1] --> P1[Product 1]
-        D2[Domain 2] --> P2[Product 2]
-        D3[Domain 3] --> P3[Product 3]
-        
-        subgraph "Infrastructure"
-            G[Governance]
-            I[Integration]
-            S[Security]
-        end
-    end
-```
+- **Azure Databricks**
+  - Big data processing
+  - ML workflows
+  - Collaborative notebooks
+  - Delta Lake support
 
 ## Best Practices
 
-### 1. Data Governance
-- Data ownership
-- Quality standards
-- Security policies
-- Compliance rules
-- Metadata management
+### 1. Data Storage
+- Choose appropriate storage type
+- Plan for scaling
+- Implement proper indexing
+- Configure backups
+- Monitor performance
 
-### 2. Performance Optimization
-- Indexing strategy
-- Query optimization
-- Caching layers
-- Partitioning
-- Data distribution
+### 2. Data Access
+- Use appropriate patterns
+- Implement caching
+- Handle concurrency
+- Manage connections
+- Monitor usage
 
-### 3. Security Framework
+### 3. Data Security
+- Encrypt sensitive data
+- Implement access control
+- Audit data access
+- Secure connections
+- Regular security reviews
+
+## Pattern Selection Framework
+
+| Pattern | Use Case | Azure Services | Trade-offs |
+|---------|----------|----------------|------------|
+| CQRS | High read/write ratio | SQL DB + Cosmos DB | Eventual consistency |
+| Event Sourcing | Audit requirements | Event Hub + Cosmos DB | Complexity |
+| Data Lake | Big data analytics | Data Lake + Databricks | Management overhead |
+| Polyglot | Mixed workloads | Multiple databases | Operational complexity |
+
+## Monitoring Framework
+
 ```mermaid
 graph TB
-    subgraph "Security Layers"
-        A[Authentication]
-        Z[Authorization]
-        E[Encryption]
-        M[Monitoring]
+    subgraph "Data Monitoring"
+        P[Performance] --> M[Metrics]
+        A[Availability] --> M
+        S[Security] --> M
+        M --> AL[Alerts]
         
-        subgraph "Controls"
-            AC[Access Control]
-            DC[Data Classification]
-            AM[Audit Management]
+        subgraph "Key Metrics"
+            RT[Response Time]
+            TH[Throughput]
+            ER[Error Rate]
+            ST[Storage]
         end
     end
 ```
 
-### 4. Operational Excellence
-- Monitoring setup
-- Backup strategy
-- Recovery procedures
-- Scaling approach
-- Maintenance windows
+## Data Integration Patterns
 
-## Decision Framework
+### 1. Batch Processing
+- ETL pipelines
+- Data warehousing
+- Periodic synchronization
+- Bulk operations
 
-### Pattern Selection Criteria
-1. **Data Characteristics**
-   - Volume
-   - Velocity
-   - Variety
-   - Veracity
+### 2. Real-time Processing
+- Change data capture
+- Event streaming
+- Real-time analytics
+- Message queues
 
-2. **Usage Patterns**
-   - Read/Write ratio
-   - Access patterns
-   - Query complexity
-   - Consistency needs
+### 3. Hybrid Processing
+- Lambda architecture
+- Kappa architecture
+- Data lake processing
+- Streaming ETL
 
-3. **Operational Requirements**
-   - Availability
-   - Scalability
-   - Maintenance
-   - Cost constraints
-
-Remember: Data architecture should align with business needs while maintaining performance, security, and maintainability.
+Remember:
+- Choose patterns based on requirements
+- Consider scalability needs
+- Plan for data growth
+- Monitor performance
+- Maintain security
+- Document everything
+- Test thoroughly

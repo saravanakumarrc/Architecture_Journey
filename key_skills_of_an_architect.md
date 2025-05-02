@@ -77,7 +77,7 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 ## Data Management
 
 ### Deep Understanding Required
-- [ ] Data architecture patterns
+- [ ] [Data architecture patterns](src/Data_Architecture_Patterns.md)
 - [ ] Relational database optimization
 - [ ] NoSQL database selection criteria
 - [ ] Data consistency models (strong, eventual, causal)
@@ -101,7 +101,7 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 - [ ] [Security Architecture Patterns](src/Security_Architecture_Patterns.md)
 - [ ] [Zero Trust Architecture Principles](src/Zero_Trust_Architecture_Principles.md)
 - [ ] [Authentication and Authorization Frameworks](src/Authentication_and_Authorization_Frameworks.md)
-- [ ] Data protection strategies
+- [ ] [Data Protection Strategies](src/Data_Protection_Strategies.md)
 - [ ] Security compliance requirements for your industry
 
 ### Basic Understanding Required
@@ -119,7 +119,7 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 - [ ] [Technical Debt Management](src/Technical_Debt_Management.md)
 - [ ] Refactoring strategies
 - [ ] [Testing Best Practices](src/Testing_Best_Practices.md)
-- [ ] Code quality metrics and standards
+- [ ] [Code Quality Metrics and Standards](src/Code_Quality_Metrics_and_Standards.md)
 
 ### Basic Understanding Required
 - [ ] Version control workflows
@@ -135,7 +135,7 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 - [ ] Integration patterns and anti-patterns
 - [ ] [Message broker architectures](src/Message_Broker_Architectures.md)
 - [ ] Asynchronous communication patterns
-- [ ] API gateway patterns
+- [ ] [API gateway patterns](src/API_Gateway_Patterns.md)
 - [ ] Service discovery mechanisms
 
 ### Basic Understanding Required
