@@ -78,12 +78,12 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 
 ### Deep Understanding Required
 - [ ] [Data architecture patterns](src/Data_Architecture_Patterns.md)
-- [ ] Relational database optimization
-- [ ] NoSQL database selection criteria
-- [ ] Data consistency models (strong, eventual, causal)
-- [ ] Data partitioning strategies
-- [ ] Caching strategies and implementations
-- [ ] Database scalability patterns
+- [ ] [Relational Database Optimization](src/Relational_Database_Optimization.md)
+- [ ] [NoSQL Database Selection Criteria](src/NoSQL_Database_Selection_Criteria.md)
+- [ ] [Data Consistency Models](src/Data_Consistency_Models.md)
+- [ ] [Data Partitioning Strategies](src/Data_Partitioning_Strategies.md)
+- [ ] [Caching Strategies and Implementations](src/Caching_Strategies_and_Implementations.md)
+- [ ] [Database Scalability Patterns](src/Database_Scalability_Patterns.md)
 
 ### Basic Understanding Required
 - [ ] Data pipeline architectures
