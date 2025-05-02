@@ -166,13 +166,16 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 ## Soft Skills & Leadership
 
 ### Deep Understanding Required
-- [ ] Technical communication (verbal and written)
-- [ ] Stakeholder management
-- [ ] Trade-off analysis
-- [ ] Technical roadmap planning
-- [ ] Technical mentorship
-- [ ] Decision-making frameworks
-- [ ] Risk assessment and mitigation
+- [ ] [Technical Communication (Verbal and Written)](src/Technical_Communication.md)
+- [ ] [Stakeholder Management](src/Stakeholder_Management.md)
+- [ ] [Trade-off Analysis](src/Trade_off_Analysis.md)
+- [ ] [Technical Roadmap Planning](src/Technical_Roadmap_Planning.md)
+- [ ] [Technical Mentorship](src/Technical_Mentorship.md)
+- [ ] [Decision-making Frameworks](src/Decision_Making_Frameworks.md)
+- [ ] [Risk Assessment and Mitigation](src/Risk_Assessment_and_Mitigation.md)
+- [ ] [Change Management](src/Change_Management.md)
+- [ ] [Team Building](src/Team_Building.md)
+- [ ] [Conflict Resolution](src/Conflict_Resolution.md)
 
 ### Basic Understanding Required
 - [ ] [Project management methodologies](src/Project_Management_Methodologies.md)
