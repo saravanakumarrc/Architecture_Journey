@@ -291,6 +291,173 @@ sequenceDiagram
     end
 ```
 
+## Pattern Selection Framework
+
+### 1. Decision Matrix
+| Pattern | When to Use | Benefits | Trade-offs |
+|---------|-------------|----------|------------|
+| Circuit Breaker | High failure rates | Prevents cascade failures | Additional latency |
+| Retry | Transient failures | Handles temporary issues | Increased load |
+| Bulkhead | Resource contention | Isolates failures | Reduced throughput |
+| Timeout | Slow responses | Bounds operations | Incomplete operations |
+
+### 2. Pattern Combinations
+1. **Circuit Breaker + Retry**
+   - Retry on transient failures
+   - Break circuit on persistent issues
+   - Gradual recovery strategy
+
+2. **Bulkhead + Timeout**
+   - Resource pool management
+   - Bounded execution time
+   - Predictable failure modes
+
+3. **Retry + Timeout**
+   - Bounded retry attempts
+   - Maximum operation time
+   - Graceful degradation
+
+## Resilience Maturity Model
+
+```mermaid
+graph TB
+    subgraph "Maturity Levels"
+        L1[Level 1: Basic] --> L2[Level 2: Managed]
+        L2 --> L3[Level 3: Defined]
+        L3 --> L4[Level 4: Measured]
+        L4 --> L5[Level 5: Optimized]
+        
+        subgraph "Key Areas"
+            P[Patterns]
+            M[Monitoring]
+            A[Automation]
+            T[Testing]
+        end
+    end
+```
+
+### Level Characteristics
+
+#### Level 1: Basic
+- Basic error handling
+- Manual recovery
+- Limited monitoring
+- Ad-hoc testing
+
+#### Level 2: Managed
+- Standard retry policies
+- Basic circuit breakers
+- Regular monitoring
+- Planned testing
+
+#### Level 3: Defined
+- Multiple resilience patterns
+- Automated recovery
+- Comprehensive monitoring
+- Regular chaos testing
+
+#### Level 4: Measured
+- Pattern effectiveness metrics
+- Predictive monitoring
+- Automated remediation
+- Continuous resilience testing
+
+#### Level 5: Optimized
+- Self-tuning patterns
+- ML-based predictions
+- Autonomous operations
+- Continuous optimization
+
+## Implementation Guidelines
+
+### 1. Pattern Implementation
+- Start with core patterns
+- Add complexity gradually
+- Monitor effectiveness
+- Adjust parameters based on data
+
+### 2. Testing Strategy
+- Unit tests for patterns
+- Integration testing
+- Chaos engineering
+- Load testing
+- Recovery validation
+
+### 3. Monitoring Setup
+- Pattern state changes
+- Failure rates and types
+- Recovery times
+- Resource utilization
+
+### 4. Documentation Requirements
+- Pattern configurations
+- Failure scenarios
+- Recovery procedures
+- Runbooks
+
+## Implementation Checklist
+
+### 1. Core Patterns
+- [ ] Circuit breaker implementation
+- [ ] Retry mechanism with backoff
+- [ ] Bulkhead pattern setup
+- [ ] Timeout handlers
+- [ ] Fallback mechanisms
+
+### 2. Monitoring
+- [ ] Pattern state monitoring
+- [ ] Failure rate tracking
+- [ ] Recovery time measurement
+- [ ] Resource usage monitoring
+- [ ] Alert configuration
+
+### 3. Testing
+- [ ] Unit tests for patterns
+- [ ] Integration test suite
+- [ ] Chaos testing setup
+- [ ] Performance test scenarios
+- [ ] Recovery procedure validation
+
+### 4. Operations
+- [ ] Runbook documentation
+- [ ] Alert response procedures
+- [ ] Escalation paths
+- [ ] Recovery playbooks
+- [ ] Post-mortem templates
+
+### 5. Continuous Improvement
+- [ ] Pattern effectiveness metrics
+- [ ] Regular pattern review
+- [ ] Parameter optimization
+- [ ] Failure analysis
+- [ ] Pattern evolution strategy
+
+## Anti-patterns to Avoid
+
+### 1. Retry Storm
+- Uncontrolled retries
+- No backoff strategy
+- Network amplification
+- Resource exhaustion
+
+### 2. Cascading Timeouts
+- Nested timeout configurations
+- Timeout propagation
+- Unpredictable behavior
+- Resource leaks
+
+### 3. Hidden Dependencies
+- Undocumented dependencies
+- Unclear failure modes
+- Unexpected cascading failures
+- Complex recovery
+
+### 4. Inconsistent Recovery
+- Manual recovery procedures
+- Undefined states
+- Data inconsistency
+- Partial failures
+
 ## Best Practices
 
 1. **Pattern Combination**
@@ -317,4 +484,4 @@ sequenceDiagram
    - Load testing
    - Recovery validation
 
-Remember: Resilience patterns should be implemented thoughtfully and monitored continuously. The goal is to maintain system stability while gracefully handling failures.
+Remember: Resilience is not just about implementing patterns, but about creating a comprehensive strategy that includes monitoring, testing, and continuous improvement. The goal is to build systems that can detect, respond to, and recover from failures automatically while maintaining system stability.
