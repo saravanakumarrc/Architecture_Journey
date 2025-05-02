@@ -1,4 +1,4 @@
-# Software Architect Skills Checklist
+# Key Skills of an Architect
 
 ```mermaid
 mindmap
@@ -224,4 +224,20 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 - [ ] Industry-specific technical standards
 - [ ] Open-source governance
 
-This checklist covers the broad range of skills expected from a software architect. You can use it to identify areas for growth and development in your career. Remember that the depth required in each area can vary depending on your specific industry, company size, and the nature of the applications you're architecting.
+## Business & Industry Knowledge
+
+### Deep Understanding Required
+- [ ] [Industry Trends and Competitive Landscape](src/Industry_Trends_and_Competitive_Landscape.md)
+- [ ] [Regulatory Environment](src/Regulatory_Environment.md)
+- [ ] [Market Dynamics Affecting Technical Choices](src/Market_Dynamics_Affecting_Technical_Choices.md)
+- [ ] Business Strategy and Goals
+- [ ] Return on Investment (ROI)
+- [ ] Total Cost of Ownership (TCO)
+- [ ] Risk Management
+- [ ] Business Process Engineering
+
+### Basic Understanding Required
+- [ ] Industry trends and competitive landscape
+- [ ] Regulatory environment for your domain
+- [ ] Market dynamics affecting technical choices
+

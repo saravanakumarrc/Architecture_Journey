@@ -1,281 +1,138 @@
 # Message Queue Technologies
 
 ## Overview
-Message queues are communication systems that enable asynchronous communication between different parts of a distributed system.
+Message queues are essential components in distributed systems architecture, enabling asynchronous communication and loose coupling between services. This document explores major message queue technologies and their use cases.
 
-```mermaid
-graph TD
-    A[Message Queue Technologies] --> B[Message Brokers]
-    A --> C[Streaming Platforms]
-    B --> D[RabbitMQ]
-    B --> E[ActiveMQ]
-    C --> F[Apache Kafka]
-    C --> G[Azure Event Hubs]
-    A --> H[Patterns]
-    H --> I[Pub/Sub]
-    H --> J[Point-to-Point]
-    H --> K[Request/Reply]
-```
-
-## Key Technologies
+## Key Message Queue Technologies
 
 ### Apache Kafka
 - Distributed streaming platform
-- High throughput
-- Horizontal scalability
-- Topic-based architecture
-- Persistent storage
-- Exactly-once semantics
+- High throughput and horizontal scalability
+- Persistent message storage with configurable retention
+- Ideal for: Event streaming, log aggregation, stream processing
+- Key features: Topic partitioning, consumer groups, exactly-once delivery
 
 ### RabbitMQ
-- Traditional message broker
-- Multiple messaging protocols
-- Rich routing capabilities
-- Flexible message routing
-- Queue mirroring
-- Plugin architecture
-
-### Apache ActiveMQ
-- JMS compliance
-- Multiple protocol support
-- Enterprise integration
-- High availability
-- Load balancing
-- Message persistence
+- Traditional message broker implementing AMQP
+- Rich routing capabilities (direct, topic, fanout)
+- Strong consistency and reliability guarantees
+- Ideal for: Traditional queuing, complex routing scenarios
+- Key features: Message acknowledgments, dead letter queues, plugins
 
 ### Azure Service Bus
-- Fully managed service
-- Enterprise messaging
-- AMQP support
-- Role-based access
-- Multiple communication patterns
-- Dead letter queues
+- Fully managed enterprise message broker
+- First-party Azure integration
+- Support for both queues and topics/subscriptions
+- Ideal for: Enterprise applications, Azure-native solutions
+- Key features: AMQP support, role-based access control, message sessions
 
-## Best Practices Checklist
+### Amazon SQS
+- Fully managed queue service
+- Simple point-to-point messaging
+- Seamless AWS integration
+- Ideal for: AWS-based applications, simple queuing needs
+- Key features: Standard and FIFO queues, message retention, visibility timeout
 
-### Architecture Design
-- [ ] Define message schemas
-- [ ] Plan message routing
-- [ ] Design error handling
-- [ ] Consider dead letter queues
-- [ ] Plan scaling strategy
+### Apache ActiveMQ
+- Open-source message broker
+- Multiple protocol support (AMQP, MQTT, STOMP)
+- Traditional JMS implementation
+- Ideal for: Java applications, legacy system integration
+- Key features: Virtual destinations, message groups, security
 
-### Performance
-- [ ] Configure persistence properly
-- [ ] Optimize batch sizes
-- [ ] Set appropriate TTL
-- [ ] Monitor queue depths
-- [ ] Plan resource allocation
+## Selection Criteria
 
-### Security
-- [ ] Implement authentication
-- [ ] Configure authorization
-- [ ] Enable encryption
-- [ ] Audit message access
-- [ ] Secure connections
+### Performance Considerations
+- Throughput requirements
+- Latency sensitivity
+- Message size and volume
+- Persistence needs
 
-## Trade-offs Analysis
+### Operational Aspects
+- Deployment complexity
+- Monitoring and management
+- Scalability requirements
+- High availability setup
 
-```mermaid
-mindmap
-  root((Message Queue
-    Technology
-    Trade-offs))
-    (Advantages)
-      [Decoupling]
-      [Scalability]
-      [Reliability]
-      [Load leveling]
-    (Disadvantages)
-      [Additional complexity]
-      [Network overhead]
-      [Latency]
-      [Operational cost]
-```
+### Integration Requirements
+- Protocol support
+- Client library availability
+- Cloud provider integration
+- Legacy system compatibility
 
-## Implementation Patterns
+### Cost Factors
+- Licensing costs
+- Operational overhead
+- Infrastructure requirements
+- Message volume pricing
 
-### Publisher-Subscriber (Pub/Sub)
-```mermaid
-sequenceDiagram
-    participant Publisher
-    participant Topic
-    participant Subscriber1
-    participant Subscriber2
-    
-    Publisher->>Topic: Publish Message
-    Topic->>Subscriber1: Deliver Message
-    Topic->>Subscriber2: Deliver Message
-```
+## Best Practices
 
-### Point-to-Point
-```mermaid
-sequenceDiagram
-    participant Sender
-    participant Queue
-    participant Receiver
-    
-    Sender->>Queue: Send Message
-    Queue->>Receiver: Consume Message
-    Receiver->>Queue: Acknowledge
-```
+1. Message Durability
+   - Configure appropriate persistence settings
+   - Implement proper acknowledgment mechanisms
+   - Plan for disaster recovery
 
-## Sample Implementations
+2. Error Handling
+   - Implement dead letter queues
+   - Define retry policies
+   - Monitor failed messages
 
-### Kafka Producer
-```java
-Properties props = new Properties();
-props.put("bootstrap.servers", "localhost:9092");
-props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+3. Performance Optimization
+   - Batch messages when appropriate
+   - Configure optimal partition counts
+   - Monitor and adjust resource allocation
 
-Producer<String, String> producer = new KafkaProducer<>(props);
-producer.send(new ProducerRecord<>("topic", "key", "value"));
-```
+4. Security
+   - Implement authentication and authorization
+   - Encrypt messages in transit and at rest
+   - Regular security audits
 
-### RabbitMQ Consumer
-```python
-def callback(ch, method, properties, body):
-    print(f" [x] Received {body}")
+## Common Patterns
 
-channel.basic_consume(
-    queue='hello',
-    auto_ack=True,
-    on_message_callback=callback
-)
-```
-
-## Performance Considerations
-
-### Producer Side
-1. Batch Size
-   - Message grouping
-   - Compression ratio
-   - Latency trade-off
-
-2. Acknowledgment Strategy
-   - Fire and forget
-   - Synchronous confirmation
-   - Asynchronous confirmation
-
-### Consumer Side
-1. Prefetch Count
-   - Memory usage
-   - Processing capacity
-   - Fairness
-
-2. Concurrency Model
-   - Single-threaded
-   - Multi-threaded
-   - Process-based
-
-## Monitoring Checklist
-- [ ] Queue depth
-- [ ] Message rate
-- [ ] Consumer lag
-- [ ] Error rate
-- [ ] Network latency
-- [ ] Disk usage
-- [ ] Memory usage
-
-## High Availability Configurations
-
-### Kafka Cluster
-```mermaid
-graph TD
-    A[ZooKeeper Ensemble] --> B[Broker 1]
-    A --> C[Broker 2]
-    A --> D[Broker 3]
-    B --> E[Topic Partition 1]
-    C --> F[Topic Partition 2]
-    D --> G[Topic Partition 3]
-```
-
-### RabbitMQ Cluster
-```mermaid
-graph TD
-    A[Load Balancer] --> B[Node 1]
-    A --> C[Node 2]
-    B --> D[Queue Mirror]
-    C --> E[Queue Mirror]
-    D --> F[Disk Storage]
-    E --> G[Disk Storage]
-```
-
-## Security Best Practices
-1. Authentication
-   - SASL
-   - SSL/TLS certificates
-   - Username/password
-   - OAuth 2.0
-
-2. Authorization
-   - ACLs
-   - Role-based access
-   - Resource quotas
-   - Topic restrictions
-
-3. Network Security
-   - TLS encryption
-   - VPN/private networks
-   - Network segmentation
-   - Firewall rules
-
-## Disaster Recovery
-1. Backup Strategy
-   - Regular snapshots
-   - Log replication
-   - Cross-region replication
-
-2. Recovery Process
-   - Message replay
-   - Consumer offset management
-   - Cluster rebuild procedures
-
-## Integration Patterns
-1. Message Routing
-   - Content-based routing
-   - Header-based routing
+1. Publisher-Subscriber
+   - One-to-many message distribution
    - Topic-based routing
+   - Event broadcasting
 
-2. Message Transformation
-   - Message enrichment
-   - Message filtering
-   - Message splitting
+2. Point-to-Point
+   - Single sender and receiver
+   - Guaranteed message processing
+   - Work queue scenarios
 
-3. System Integration
-   - Dead letter queues
-   - Message bridges
-   - Protocol bridges
+3. Request-Reply
+   - Synchronous communication over queues
+   - Correlation IDs
+   - Temporary reply queues
 
-## Tools and Ecosystem
+## Monitoring and Operations
 
-### Monitoring
-- Prometheus
-- Grafana
-- ELK Stack
-- Datadog
+### Key Metrics
+- Message throughput
+- Queue depth
+- Processing latency
+- Error rates
+- Consumer lag
 
-### Management
-- Kafka Manager
-- RabbitMQ Management UI
-- ActiveMQ Web Console
+### Operational Tasks
+- Queue maintenance
+- Performance tuning
+- Capacity planning
+- Version upgrades
 
-### Development
-- Kafka Streams
-- Spring Cloud Stream
-- MassTransit
-- Confluent Platform
+## Future Trends
 
-## Additional Resources
-1. Documentation
-   - [Apache Kafka Documentation](https://kafka.apache.org/documentation/)
-   - [RabbitMQ Documentation](https://www.rabbitmq.com/documentation.html)
-   - [ActiveMQ Documentation](https://activemq.apache.org/components/classic/documentation)
-   - [Azure Service Bus Documentation](https://docs.microsoft.com/en-us/azure/service-bus-messaging/)
+1. Serverless Integration
+   - Event-driven architectures
+   - Function-as-a-Service integration
+   - Cloud-native patterns
 
-2. Learning Resources
-   - Message Queue Patterns
-   - Performance Tuning
-   - Security Best Practices
-   - Monitoring Strategies
+2. Edge Computing
+   - Edge-based message processing
+   - Hybrid cloud scenarios
+   - IoT integration
+
+3. AI/ML Integration
+   - Intelligent routing
+   - Anomaly detection
+   - Predictive scaling
