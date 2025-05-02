@@ -187,7 +187,7 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 ### Deep Understanding Required
 - [ ] Business domain concepts for your industry
 - [ ] [Domain-driven design principles](src/Domain_Driven_Design.md)
-- [ ] Business process modeling
+- [ ] [Business process modeling](src/Business_Process_Modeling.md)
 
 ### Basic Understanding Required
 - [ ] Industry trends and competitive landscape
@@ -198,12 +198,12 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 
 ### Basic Understanding Required
 - [ ] [AI/ML Application Patterns](src/AI_ML_Application_Patterns.md)
-- [ ] Serverless architecture patterns
-- [ ] Edge computing models
-- [ ] IoT architecture patterns (if relevant)
-- [ ] Blockchain application patterns (if relevant)
-- [ ] WebAssembly use cases
-- [ ] Low-code/no-code platforms
+- [ ] [Serverless architecture patterns](src/Serverless_Architecture_Patterns.md)
+- [ ] [Edge computing models](src/Edge_Computing_Architectures.md)
+- [ ] [IoT architecture patterns](src/IoT_Architecture_Patterns.md)
+- [ ] [Blockchain application patterns](src/Blockchain_Application_Patterns.md)
+- [ ] [WebAssembly use cases](src/WebAssembly_Use_Cases.md)
+- [ ] [Low-code/no-code platforms](src/Low_Code_No_Code_Platforms.md)
 
 ## Governance & Standards
 
