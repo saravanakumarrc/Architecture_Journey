@@ -1,227 +1,312 @@
-# Monitoring and Observability Patterns
+# Monitoring and Observability Platforms
 
-```mermaid
-mindmap
-    root((Observability
-        Stack))
-        (Monitoring)
-            [Metrics]
-            [Alerts]
-            [Dashboards]
-            [Health Checks]
-        (Tracing)
-            [Distributed]
-            [Transaction]
-            [Error]
-            [Performance]
-        (Logging)
-            [Structured]
-            [Centralized]
-            [Correlation]
-            [Analysis]
-        (Visualization)
-            [Real-time]
-            [Historical]
-            [Analytics]
-            [Reporting]
+## Core Concepts
+
+### 1. Three Pillars of Observability
+- Metrics
+- Traces
+- Logs
+
+### 2. Monitoring Fundamentals
+- Data collection
+- Aggregation
+- Visualization
+- Alerting
+- Correlation
+
+## Popular Platforms
+
+### 1. Prometheus & Grafana Stack
+
+#### Prometheus
+```yaml
+# Example prometheus.yml
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'spring-actuator'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['localhost:8080']
+
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['localhost:9100']
 ```
 
-## Observability Components
-
-### 1. Three Pillars
-
-```mermaid
-graph TB
-    subgraph "Observability Pillars"
-        M[Metrics] --> A[Analysis]
-        L[Logs] --> A
-        T[Traces] --> A
-        A --> I[Insights]
-        
-        subgraph "Data Processing"
-            C[Collect]
-            P[Process]
-            S[Store]
-            V[Visualize]
-        end
-    end
+#### Grafana Dashboard
+```json
+{
+  "dashboard": {
+    "panels": [
+      {
+        "title": "CPU Usage",
+        "type": "graph",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "rate(process_cpu_seconds_total[5m])",
+            "legendFormat": "{{instance}}"
+          }
+        ]
+      }
+    ]
+  }
+}
 ```
 
-### 2. Data Flow
+### 2. ELK Stack (Elasticsearch, Logstash, Kibana)
 
-```mermaid
-graph LR
-    subgraph "Telemetry Pipeline"
-        S[Sources] --> C[Collectors]
-        C --> P[Processors]
-        P --> ST[Storage]
-        ST --> V[Visualization]
-        
-        subgraph "Processing"
-            F[Filter]
-            E[Enrich]
-            A[Aggregate]
-            R[Route]
-        end
-    end
+#### Logstash Pipeline
+```ruby
+# Example Logstash config
+input {
+  beats {
+    port => 5044
+  }
+}
+
+filter {
+  grok {
+    match => { "message" => "%{COMBINEDAPACHELOG}" }
+  }
+  date {
+    match => [ "timestamp", "dd/MMM/yyyy:HH:mm:ss Z" ]
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => ["localhost:9200"]
+    index => "web-logs-%{+YYYY.MM.dd}"
+  }
+}
 ```
 
-## Implementation Checklist
+### 3. Azure Monitor
 
-### Metrics Collection
-- [ ] Define key metrics
-- [ ] Set up collectors
-- [ ] Configure aggregation
-- [ ] Set thresholds
-- [ ] Implement alerting
-- [ ] Configure dashboards
-- [ ] Set up storage
-- [ ] Test collection
-- [ ] Validate accuracy
+#### Application Insights
+```javascript
+// Example instrumentation
+const appInsights = require('applicationinsights');
+appInsights
+  .setup('YOUR_INSTRUMENTATION_KEY')
+  .setAutoDependencyCorrelation(true)
+  .setAutoCollectRequests(true)
+  .setAutoCollectPerformance(true)
+  .setAutoCollectExceptions(true)
+  .setAutoCollectDependencies(true)
+  .setAutoCollectConsole(true)
+  .setUseDiskRetryCaching(true)
+  .start();
+```
 
-### Logging System
-- [ ] Define log levels
-- [ ] Configure log shipping
-- [ ] Set up centralization
-- [ ] Implement parsing
-- [ ] Configure retention
-- [ ] Set up analysis
-- [ ] Enable search
-- [ ] Configure backup
-- [ ] Test recovery
+### 4. Datadog
 
-### Tracing Implementation
-- [ ] Set up trace collection
-- [ ] Configure sampling
-- [ ] Implement correlation
-- [ ] Set up visualization
-- [ ] Configure storage
-- [ ] Enable analysis
-- [ ] Test trace flow
-- [ ] Validate coverage
-- [ ] Monitor overhead
+#### Agent Configuration
+```yaml
+# Example datadog.yaml
+api_key: YOUR_API_KEY
+site: datadoghq.com
+logs_enabled: true
 
-### Alerting Configuration
-- [ ] Define alert rules
-- [ ] Set up notifications
-- [ ] Configure escalations
-- [ ] Implement SLOs
-- [ ] Set up on-call
-- [ ] Configure runbooks
-- [ ] Test alert flow
-- [ ] Validate responses
-- [ ] Monitor effectiveness
+apm_config:
+  enabled: true
+  
+process_config:
+  enabled: true
+```
 
-## Trade-offs
+## Implementation Patterns
 
-### Data Granularity vs. Storage
-- **High Granularity**
-  - Pros:
-    * Detailed insights
-    * Better debugging
-    * Fine-grained analysis
-  - Cons:
-    * Higher storage costs
-    * More processing needed
-    * Increased complexity
+### 1. Metrics Collection
+```python
+# Example using Prometheus client
+from prometheus_client import Counter, Histogram
+import time
 
-### Real-time vs. Batch Processing
-- **Real-time Processing**
-  - Pros:
-    * Immediate insights
-    * Faster responses
-    * Better alerting
-  - Cons:
-    * Higher resource usage
-    * More complex
-    * Increased cost
+REQUEST_COUNT = Counter(
+    'request_count_total',
+    'Total number of requests',
+    ['method', 'endpoint']
+)
 
-### Sampling vs. Full Collection
-- **Full Collection**
-  - Pros:
-    * Complete data
-    * No missing events
-    * Better analysis
-  - Cons:
-    * Higher costs
-    * More storage
-    * Processing overhead
+REQUEST_LATENCY = Histogram(
+    'request_latency_seconds',
+    'Request latency in seconds',
+    ['method', 'endpoint']
+)
 
-### Retention vs. Cost
-- **Long Retention**
-  - Pros:
-    * Historical analysis
-    * Trend detection
-    * Compliance
-  - Cons:
-    * Higher storage costs
-    * More management
-    * Query performance
+def handle_request(method, endpoint):
+    REQUEST_COUNT.labels(method=method, endpoint=endpoint).inc()
+    
+    start = time.time()
+    # ... handle request ...
+    duration = time.time() - start
+    
+    REQUEST_LATENCY.labels(method=method, endpoint=endpoint).observe(duration)
+```
+
+### 2. Distributed Tracing
+```python
+# Example using OpenTelemetry
+from opentelemetry import trace
+from opentelemetry.trace import Status, StatusCode
+
+tracer = trace.get_tracer(__name__)
+
+@tracer.start_as_current_span("process_order")
+def process_order(order_id):
+    with tracer.start_span("validate_order") as span:
+        # ... validation logic ...
+        span.set_attribute("order.id", order_id)
+        span.set_status(Status(StatusCode.OK))
+    
+    with tracer.start_span("payment_processing") as span:
+        # ... payment logic ...
+        span.set_attribute("payment.amount", amount)
+```
+
+### 3. Log Aggregation
+```python
+# Example using structured logging
+import structlog
+
+logger = structlog.get_logger()
+
+def process_transaction(transaction_id, amount):
+    logger.info(
+        "processing_transaction",
+        transaction_id=transaction_id,
+        amount=amount,
+        status="started"
+    )
+    try:
+        # Process transaction
+        logger.info(
+            "transaction_completed",
+            transaction_id=transaction_id,
+            status="success"
+        )
+    except Exception as e:
+        logger.error(
+            "transaction_failed",
+            transaction_id=transaction_id,
+            error=str(e)
+        )
+```
 
 ## Best Practices
 
-1. **Data Collection**
-   - Use structured logging
-   - Implement correlation IDs
-   - Configure proper sampling
-   - Set appropriate levels
-   - Monitor collection health
-   - Regular validation
-   - Document formats
+### 1. Metric Design
+- Use clear naming conventions
+- Define appropriate labels/tags
+- Choose proper metric types
+- Consider cardinality
 
-2. **Storage Management**
-   - Plan retention policies
-   - Implement archiving
-   - Configure compression
-   - Monitor usage
-   - Regular cleanup
-   - Backup strategy
-   - Recovery testing
-
-3. **Analysis & Visualization**
-   - Create useful dashboards
-   - Set up proper alerts
-   - Configure thresholds
-   - Enable quick search
-   - Regular reviews
-   - User training
-   - Document procedures
-
-4. **Operations**
-   - Monitor collector health
-   - Manage capacity
-   - Regular maintenance
-   - Update procedures
-   - Train team
-   - Review effectiveness
-   - Continuous improvement
-
-## Metrics Framework
-
-```mermaid
-graph TB
-    subgraph "Metrics Hierarchy"
-        B[Business] --> S[Service]
-        S --> I[Infrastructure]
-        
-        subgraph "Categories"
-            U[Usage]
-            P[Performance]
-            R[Reliability]
-            H[Health]
-        end
-    end
+### 2. Alert Design
+```yaml
+# Example Prometheus alert rule
+groups:
+- name: example
+  rules:
+  - alert: HighErrorRate
+    expr: rate(http_requests_total{status=~"5.."}[5m]) > 1
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: High error rate detected
+      description: "Error rate is {{ $value }} per second"
 ```
 
-## Performance Indicators Matrix
+### 3. Dashboard Design
+- Group related metrics
+- Use consistent time ranges
+- Include context
+- Design for different audiences
 
-| Category | Metric | Warning | Critical | Collection |
-|----------|--------|---------|----------|------------|
-| Infrastructure | CPU Usage | 70% | 85% | Real-time |
-| Application | Error Rate | 0.1% | 1% | Real-time |
-| Business | Transaction Rate | -10% | -20% | Hourly |
-| User Experience | Latency | 200ms | 500ms | Real-time |
-| Security | Auth Failures | 5/min | 20/min | Real-time |
-| Availability | Uptime | 99.9% | 99% | Daily |
+## Advanced Patterns
 
-Remember: A good observability strategy provides insights across all layers of your system. Focus on collecting meaningful data that helps understand system behavior and troubleshoot issues effectively.
+### 1. SLO Monitoring
+```yaml
+# Example SLO configuration
+slo_rules:
+  - name: "API Availability"
+    target: 99.9
+    window: 30d
+    metric:
+      name: "http_request_duration_seconds"
+      success_criteria:
+        - status_code < 500
+        - latency < 1s
+```
+
+### 2. Anomaly Detection
+```python
+# Example using statistical analysis
+def detect_anomalies(metric_values, threshold=3):
+    mean = np.mean(metric_values)
+    std = np.std(metric_values)
+    z_scores = [(x - mean) / std for x in metric_values]
+    return [abs(z) > threshold for z in z_scores]
+```
+
+### 3. Correlation Analysis
+```python
+# Example trace correlation
+def correlate_events(trace_id):
+    logs = query_logs(trace_id=trace_id)
+    metrics = query_metrics(trace_id=trace_id)
+    traces = query_traces(trace_id=trace_id)
+    
+    return {
+        'logs': logs,
+        'metrics': metrics,
+        'traces': traces
+    }
+```
+
+## Integration Examples
+
+### 1. Kubernetes Monitoring
+```yaml
+# Example Prometheus ServiceMonitor
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: app-monitor
+spec:
+  selector:
+    matchLabels:
+      app: myapp
+  endpoints:
+  - port: metrics
+```
+
+### 2. Cloud Integration
+```typescript
+// Example Azure Monitor integration
+import * as monitoring from '@azure/monitor-query';
+
+async function queryMetrics(resourceId: string) {
+    const client = new monitoring.MetricsQueryClient(credential);
+    const result = await client.queryResource(
+        resourceId,
+        ['Percentage CPU'],
+        {
+            timespan: {startTime, endTime},
+            interval: monitoring.duration('PT1M')
+        }
+    );
+}
+```
+
+## References
+- Prometheus Documentation
+- Grafana Documentation
+- Azure Monitor Documentation
+- OpenTelemetry Documentation
+- Site Reliability Engineering (Google)
