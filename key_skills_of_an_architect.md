@@ -35,15 +35,15 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 
 ### Deep Understanding Required
 - [ ] [System design principles and patterns](src/System_Design_Principles_and_Patterns.md)
-- [ ] [Software architecture patterns](src/Software_Architecture_Patterns.md) (Microservices, Event-driven, Layered, etc.)
+- [ ] [Software architecture patterns](src/Software_Architecture_Patterns.md)
 - [ ] [Performance optimization techniques](src/Performance_Optimization_Techniques.md)
 - [ ] [Scalability principles and implementations](src/Scalability_Principles_and_Implementations.md)
-- [ ] [High availability design](src/High_Availability_Design.md) (Active-Active, Active-Passive patterns, Azure Availability Zones, Azure Front Door, Traffic Manager)
+- [ ] [High availability design](src/High_Availability_Design.md)
 - [ ] [Distributed systems concepts](src/Distributed_Systems_Concepts.md)
 - [ ] [Concurrency and parallelism concepts](src/Concurrency_and_Parallelism_Concepts.md)
 - [ ] [Data modeling and database design](src/Data_Modeling_and_Database_Design.md)
-- [ ] [API design (REST, GraphQL, gRPC)](src/API_Design_Concepts.md)
-- [ ] [Serverless architecture patterns](src/Serverless_Architecture_Patterns.md)
+- [ ] [API design concepts](src/API_Design_Concepts.md)
+- [ ] [Service discovery patterns](src/Service_Discovery_Patterns.md)
 - [ ] [Security by Design Principles](src/Security_by_Design_Principles.md)
 
 ### Basic Understanding Required
@@ -60,83 +60,83 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 - [ ] [Cloud architecture models](src/Cloud_Architecture_Models.md)
 - [ ] [Infrastructure as Code principles](src/Infrastructure_as_Code_Principles.md)
 - [ ] [Container orchestration concepts](src/Container_Orchestration_Concepts.md)
-- [ ] [Service mesh architectures](src/Service_Mesh_Patterns.md)
+- [ ] [Service mesh patterns](src/Service_Mesh_Patterns.md)
 - [ ] [Multi-region deployment strategies](src/Multi_Region_Deployment_Strategies.md)
 - [ ] [Cost optimization strategies](src/Cost_Optimization_Strategies.md)
-- [ ] Resource provisioning and scaling
+- [ ] [Infrastructure as Code tools](src/Infrastructure_as_Code_Tools.md)
 
 ### Basic Understanding Required
-- [ ] Specific cloud provider services (AWS, Azure, GCP)
-- [ ] Container technologies (Docker, containerd)
-- [ ] Kubernetes components and architecture
-- [ ] CI/CD pipeline tools
-- [ ] Configuration management tools
-- [ ] Terraform, CloudFormation, or equivalent IaC tools
-- [ ] Monitoring and observability platforms
+- [ ] [Cloud provider services](src/Cloud_Provider_Services.md)
+- [ ] [Container technologies](src/Container_Technologies.md)
+- [ ] [Kubernetes components and architecture](src/Kubernetes_Components_and_Architecture.md)
+- [ ] [CICD pipeline tools](src/CICD_Pipeline_Tools.md)
+- [ ] [Configuration management tools](src/Configuration_Management_Tools.md)
+- [ ] [Monitoring and observability patterns](src/Monitoring_and_Observability_Patterns.md)
 
 ## Data Management
 
 ### Deep Understanding Required
 - [ ] [Data architecture patterns](src/Data_Architecture_Patterns.md)
-- [ ] [Relational Database Optimization](src/Relational_Database_Optimization.md)
-- [ ] [NoSQL Database Selection Criteria](src/NoSQL_Database_Selection_Criteria.md)
-- [ ] [Data Consistency Models](src/Data_Consistency_Models.md)
-- [ ] [Data Partitioning Strategies](src/Data_Partitioning_Strategies.md)
-- [ ] [Caching Strategies and Implementations](src/Caching_Strategies_and_Implementations.md)
-- [ ] [Database Scalability Patterns](src/Database_Scalability_Patterns.md)
+- [ ] [Relational database optimization](src/Relational_Database_Optimization.md)
+- [ ] [NoSQL database selection criteria](src/NoSQL_Database_Selection_Criteria.md)
+- [ ] [Data consistency models](src/Data_Consistency_Models.md)
+- [ ] [Data partitioning strategies](src/Data_Partitioning_Strategies.md)
+- [ ] [Caching strategies and implementations](src/Caching_Strategies_and_Implementations.md)
+- [ ] [Database scalability patterns](src/Database_Scalability_Patterns.md)
+- [ ] [Database concepts and patterns](src/Database_Concepts_and_Patterns.md)
 
 ### Basic Understanding Required
-- [ ] Data pipeline architectures
-- [ ] ETL processes
-- [ ] Data warehousing concepts
-- [ ] Big data processing frameworks
-- [ ] SQL and query optimization
+- [ ] [Data pipeline architectures](src/Data_Pipeline_Architectures.md)
+- [ ] [ETL processes and patterns](src/ETL_Processes_and_Patterns.md)
+- [ ] [Data warehousing concepts](src/Data_Warehousing_Concepts.md)
+- [ ] [Big data processing frameworks](src/Big_Data_Processing_Frameworks.md)
+- [ ] [SQL optimization techniques](src/SQL_Optimization_Techniques.md)
 - [ ] Time series databases
 - [ ] Graph databases
 
 ## Security & Compliance
 
 ### Deep Understanding Required
-- [ ] Threat modeling
-- [ ] [Security Architecture Patterns](src/Security_Architecture_Patterns.md)
-- [ ] [Zero Trust Architecture Principles](src/Zero_Trust_Architecture_Principles.md)
-- [ ] [Authentication and Authorization Frameworks](src/Authentication_and_Authorization_Frameworks.md)
-- [ ] [Data Protection Strategies](src/Data_Protection_Strategies.md)
-- [ ] Security compliance requirements for your industry
+- [ ] [Threat modeling patterns](src/Threat_Modeling_Patterns.md)
+- [ ] [Security architecture patterns](src/Security_Architecture_Patterns.md)
+- [ ] [Zero trust architecture principles](src/Zero_Trust_Architecture_Principles.md)
+- [ ] [Authentication and authorization frameworks](src/Authentication_and_Authorization_Frameworks.md)
+- [ ] [Data protection strategies](src/Data_Protection_Strategies.md)
+- [ ] [Security compliance frameworks](src/Security_Compliance_Frameworks.md)
 
 ### Basic Understanding Required
-- [ ] Common vulnerability types (OWASP Top 10)
-- [ ] Encryption technologies
-- [ ] PKI infrastructure
-- [ ] Security testing methodologies
-- [ ] Regulatory frameworks (GDPR, HIPAA, SOC2, etc.)
-- [ ] DevSecOps practices
+- [ ] [OWASP security principles](src/OWASP_Security_Principles.md)
+- [ ] [Encryption and cryptography](src/Encryption_and_Cryptography.md)
+- [ ] [PKI infrastructure patterns](src/PKI_Infrastructure_Patterns.md)
+- [ ] [Security testing methodologies](src/Security_Testing_Methodologies.md)
+- [ ] [Regulatory compliance patterns](src/Regulatory_Compliance_Patterns.md)
+- [ ] [DevSecOps practices](src/DevSecOps_Practices.md)
 
 ## Development Practices
 
 ### Deep Understanding Required
-- [ ] Software development methodologies
-- [ ] [Technical Debt Management](src/Technical_Debt_Management.md)
-- [ ] Refactoring strategies
-- [ ] [Testing Best Practices](src/Testing_Best_Practices.md)
-- [ ] [Code Quality Metrics and Standards](src/Code_Quality_Metrics_and_Standards.md)
+- [ ] [Software development methodologies](src/Software_Development_Methodologies.md)
+- [ ] [Technical debt management](src/Technical_Debt_Management.md)
+- [ ] [Refactoring strategies](src/Refactoring_Strategies.md)
+- [ ] [Testing best practices](src/Testing_Best_Practices.md)
+- [ ] [Code quality metrics and standards](src/Code_Quality_Metrics_and_Standards.md)
 
 ### Basic Understanding Required
-- [ ] Version control workflows
-- [ ] Code review practices
-- [ ] Trunk-based development vs. branching strategies
-- [ ] Feature flag implementations
-- [ ] Continuous integration practices
-- [ ] Test-driven development
+- [ ] [Version control workflows](src/Version_Control_Workflows.md)
+- [ ] [Code review practices](src/Code_Review_Practices.md)
+- [ ] [Development workflow patterns](src/Development_Workflow_Patterns.md)
+- [ ] [Feature flag implementations](src/Feature_Flag_Implementations.md)
+- [ ] [Continuous integration practices](src/Continuous_Integration_Practices.md)
+- [ ] [Test-driven development](src/Test_Driven_Development.md)
 
 ## Integration & Communication
 
 ### Deep Understanding Required
-- [ ] Integration patterns and anti-patterns
+- [ ] [Integration patterns and antipatterns](src/Integration_Patterns_and_Antipatterns.md)
 - [ ] [Message broker architectures](src/Message_Broker_Architectures.md)
-- [ ] Asynchronous communication patterns
+- [ ] [Asynchronous communication patterns](src/Asynchronous_Communication_Patterns.md)
 - [ ] [API gateway patterns](src/API_Gateway_Patterns.md)
-- [ ] Service discovery mechanisms
+- [ ] [Service discovery patterns](src/Service_Discovery_Patterns.md)
 
 ### Basic Understanding Required
 - [ ] Specific message queue technologies (Kafka, RabbitMQ, etc.)
@@ -149,18 +149,18 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 
 ### Deep Understanding Required
 - [ ] [Monitoring and Observability Patterns](src/Monitoring_and_Observability_Patterns.md)
-- [ ] SLI/SLO/SLA definitions
-- [ ] Logging architectures
-- [ ] Alerting philosophies
-- [ ] Disaster recovery planning
+- [ ] [SLI/SLO/SLA Frameworks](src/SLI_SLO_SLA_Frameworks.md)
+- [ ] [Logging architectures](src/Logging_Architectures.md)
+- [ ] [Disaster recovery planning](src/Disaster_Recovery_Planning.md)
 - [ ] [Resilience Patterns](src/Resilience_Patterns.md)
+- [ ] [High Availability Design](src/High_Availability_Design.md)
 
 ### Basic Understanding Required
 - [ ] Specific monitoring tools (Prometheus, Grafana, etc.)
 - [ ] Log aggregation systems (ELK, Loki, etc.)
 - [ ] APM (Application Performance Monitoring) tools
-- [ ] Chaos engineering concepts
-- [ ] Blue/green and canary deployment patterns
+- [ ] [Chaos Engineering Principles](src/Chaos_Engineering_Principles.md)
+- [ ] [Deployment Patterns](src/Deployment_Patterns.md)
 - [ ] Infrastructure monitoring
 
 ## Soft Skills & Leadership
@@ -197,21 +197,24 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 ## Emerging Technologies
 
 ### Basic Understanding Required
-- [ ] [AI/ML Application Patterns](src/AI_ML_Application_Patterns.md)
+- [ ] [AI/ML application patterns](src/AI_ML_Application_Patterns.md)
 - [ ] [Serverless architecture patterns](src/Serverless_Architecture_Patterns.md)
-- [ ] [Edge computing models](src/Edge_Computing_Architectures.md)
+- [ ] [Edge computing architectures](src/Edge_Computing_Architectures.md)
 - [ ] [IoT architecture patterns](src/IoT_Architecture_Patterns.md)
 - [ ] [Blockchain application patterns](src/Blockchain_Application_Patterns.md)
 - [ ] [WebAssembly use cases](src/WebAssembly_Use_Cases.md)
 - [ ] [Low-code/no-code platforms](src/Low_Code_No_Code_Platforms.md)
+- [ ] [Network and protocol design](src/Network_and_Protocol_Design.md)
+- [ ] [Cloud-native development patterns](src/Cloud_Native_Development_Patterns.md)
 
 ## Governance & Standards
 
 ### Deep Understanding Required
-- [ ] Architecture governance models
-- [ ] Technology selection frameworks
-- [ ] Architecture review processes
+- [ ] [Architecture governance models](src/Architecture_Governance_Models.md)
+- [ ] [Cloud provider services](src/Cloud_Provider_Services.md)
+- [ ] [Architecture review processes](src/Architecture_Review_Process.md)
 - [ ] [Trade-off Analysis](src/Trade_off_Analysis.md)
+- [ ] [SLI/SLO/SLA Frameworks](src/SLI_SLO_SLA_Frameworks.md)
 
 ### Basic Understanding Required
 - [ ] Enterprise architecture frameworks (TOGAF, Zachman, etc.)
