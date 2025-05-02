@@ -49,10 +49,10 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 ### Basic Understanding Required
 - [ ] Low-level programming concepts
 - [ ] Multiple programming paradigms (OOP, functional, procedural)
-- [ ] Memory management concepts
-- [ ] Operating system fundamentals
-- [ ] Network protocols (HTTP, TCP/IP, WebSockets)
-- [ ] Internationalization and localization
+- [ ] [Memory management concepts](src/Memory_Management_Concepts.md)
+- [ ] [Operating system fundamentals](src/Operating_System_Fundamentals.md)
+- [ ] [Network protocols](src/Network_Protocols.md) (HTTP, TCP/IP, WebSockets)
+- [ ] [Internationalization and localization](src/Internationalization_and_Localization.md)
 
 ## Cloud & Infrastructure
 
@@ -175,18 +175,18 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 - [ ] Risk assessment and mitigation
 
 ### Basic Understanding Required
-- [ ] Project management methodologies
-- [ ] Cost estimation techniques
-- [ ] Team dynamics and collaboration models
-- [ ] Change management practices
-- [ ] Technical documentation standards
-- [ ] Presentation skills
+- [ ] [Project management methodologies](src/Project_Management_Methodologies.md)
+- [ ] [Cost estimation techniques](src/Cost_Estimation_Techniques.md)
+- [ ] [Team dynamics and collaboration models](src/Team_Dynamics_and_Collaboration_Models.md)
+- [ ] [Change management practices](src/Change_Management_Practices.md)
+- [ ] [Technical documentation standards](src/Technical_Documentation_Standards.md)
+- [ ] [Presentation skills](src/Presentation_Skills.md)
 
 ## Domain Knowledge
 
 ### Deep Understanding Required
 - [ ] Business domain concepts for your industry
-- [ ] Domain-driven design principles
+- [ ] [Domain-driven design principles](src/Domain_Driven_Design.md)
 - [ ] Business process modeling
 
 ### Basic Understanding Required
