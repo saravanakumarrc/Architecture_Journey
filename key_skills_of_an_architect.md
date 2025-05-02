@@ -44,7 +44,7 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 - [ ] [Data modeling and database design](src/Data_Modeling_and_Database_Design.md)
 - [ ] [API design (REST, GraphQL, gRPC)](src/API_Design_Concepts.md)
 - [ ] [Serverless architecture patterns](src/Serverless_Architecture_Patterns.md)
-- [ ] Security by design principles
+- [ ] [Security by Design Principles](src/Security_by_Design_Principles.md)
 
 ### Basic Understanding Required
 - [ ] Low-level programming concepts
@@ -61,7 +61,7 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 - [ ] [Infrastructure as Code principles](src/Infrastructure_as_Code_Principles.md)
 - [ ] [Container orchestration concepts](src/Container_Orchestration_Concepts.md)
 - [ ] [Service mesh architectures](src/Service_Mesh_Patterns.md)
-- [ ] Multi-region deployment strategies
+- [ ] [Multi-region deployment strategies](src/Multi_Region_Deployment_Strategies.md)
 - [ ] [Cost optimization strategies](src/Cost_Optimization_Strategies.md)
 - [ ] Resource provisioning and scaling
 

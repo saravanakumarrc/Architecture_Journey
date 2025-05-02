@@ -1,5 +1,32 @@
 # System Design Principles and Patterns
 
+## Core Concepts Overview
+
+```mermaid
+mindmap
+    root((System Design
+        Fundamentals))
+        (Principles)
+            [SOLID]
+            [DRY]
+            [KISS]
+            [YAGNI]
+        (Patterns)
+            [Design Patterns]
+            [Cloud Patterns]
+            [Integration Patterns]
+        (Architecture)
+            [Microservices]
+            [Event-Driven]
+            [Layered]
+            [Hexagonal]
+        (Quality)
+            [Scalability]
+            [Reliability]
+            [Security]
+            [Maintainability]
+```
+
 ## Design Principles
 
 ### 1. SOLID Principles
@@ -24,185 +51,158 @@ mindmap
             [Low-level details]
 ```
 
-#### Essential Examples
+#### Azure Implementation Examples
 
 1. **Single Responsibility**
 ```typescript
 // Good: Each class has one responsibility
-class UserAuthentication {
-    authenticate(credentials: Credentials): boolean;
+class AzureKeyVaultSecretManager {
+    constructor(private keyVaultClient: KeyVaultClient) {}
+    
+    async getSecret(secretName: string): Promise<string> {
+        return await this.keyVaultClient.getSecret(secretName);
+    }
 }
 
-class UserProfile {
-    updateProfile(data: ProfileData): void;
+class AzureStorageManager {
+    constructor(private blobServiceClient: BlobServiceClient) {}
+    
+    async uploadBlob(containerName: string, blobName: string, data: Buffer): Promise<void> {
+        const containerClient = this.blobServiceClient.getContainerClient(containerName);
+        await containerClient.uploadBlob(blobName, data);
+    }
 }
 
-// Bad: Class does too many things
-class User {
-    authenticate(): boolean;
-    updateProfile(): void;
-    sendEmail(): void;
-    generateReport(): void;
+// Bad: Mixed responsibilities
+class AzureResourceManager {
+    async getSecret(secretName: string): Promise<string> { /* ... */ }
+    async uploadBlob(containerName: string, data: Buffer): Promise<void> { /* ... */ }
+    async createVirtualMachine(vmName: string): Promise<void> { /* ... */ }
+    async sendEmail(to: string, subject: string): Promise<void> { /* ... */ }
 }
 ```
 
 2. **Open/Closed**
 ```typescript
-// Good: Open for extension, closed for modification
-interface PaymentProcessor {
-    process(payment: Payment): void;
+// Good: Open for extension with different Azure storage types
+interface CloudStorageProvider {
+    uploadFile(path: string, data: Buffer): Promise<void>;
+    downloadFile(path: string): Promise<Buffer>;
 }
 
-class CreditCardProcessor implements PaymentProcessor {
-    process(payment: Payment): void;
+class AzureBlobStorage implements CloudStorageProvider {
+    // Implementation for Azure Blob Storage
 }
 
-class PayPalProcessor implements PaymentProcessor {
-    process(payment: Payment): void;
-}
-```
-
-3. **Liskov Substitution**
-```typescript
-// Good: Square is a proper subtype of Rectangle
-interface Shape {
-    getArea(): number;
+class AzureFileStorage implements CloudStorageProvider {
+    // Implementation for Azure File Storage
 }
 
-class Rectangle implements Shape {
-    constructor(protected width: number, protected height: number) {}
-    getArea(): number { return this.width * this.height; }
-}
-
-class Square implements Shape {
-    constructor(protected size: number) {}
-    getArea(): number { return this.size * this.size; }
+class AzureDataLakeStorage implements CloudStorageProvider {
+    // Implementation for Azure Data Lake Storage
 }
 ```
 
-### 2. Design Patterns
+### 2. Azure Cloud Design Patterns
 
 ```mermaid
 graph TB
-    subgraph "Pattern Categories"
-        C[Creational] --> F[Factory]
-        C --> B[Builder]
-        C --> S[Singleton]
-        
-        ST[Structural] --> A[Adapter]
-        ST --> D[Decorator]
-        ST --> P[Proxy]
-        
-        BE[Behavioral] --> O[Observer]
-        BE --> ST[Strategy]
-        BE --> C[Command]
-    end
-```
-
-#### Pattern Selection Framework
-| Pattern | Use Case | Benefits | Trade-offs |
-|---------|----------|----------|------------|
-| Factory | Object Creation | Encapsulation | Complexity |
-| Singleton | Shared Resource | Single Instance | Global State |
-| Observer | Event Handling | Loose Coupling | Memory Leaks |
-| Strategy | Algorithm Variation | Flexibility | Class Explosion |
-
-### 3. Architectural Patterns
-
-```mermaid
-graph TB
-    subgraph "Architecture Styles"
-        L[Layered]
-        M[Microservices]
-        E[Event-Driven]
-        H[Hexagonal]
-        
-        subgraph "Characteristics"
-            SC[Scalability]
-            MT[Maintainability]
-            FL[Flexibility]
-            TS[Testability]
-        end
-    end
-```
-
-#### Pattern Comparison
-1. **Layered Architecture**
-   - Clear separation
-   - Easy to understand
-   - Traditional approach
-   - Potential tight coupling
-
-2. **Microservices**
-   - Service independence
-   - Technology diversity
-   - Scalability
-   - Operational complexity
-
-3. **Event-Driven**
-   - Loose coupling
-   - Scalability
-   - Asynchronous
-   - Complex debugging
-
-4. **Hexagonal/Ports & Adapters**
-   - Business logic isolation
-   - External dependency separation
-   - Testing flexibility
-   - Additional abstractions
-
-### 4. Integration Patterns
-
-```mermaid
-graph LR
-    subgraph "Integration Styles"
-        F[File Transfer]
-        S[Shared Database]
-        R[Remote Procedure]
-        M[Messaging]
-        
-        subgraph "Considerations"
-            T[Timing]
-            C[Coupling]
-            R[Reliability]
-        end
-    end
-```
-
-#### Pattern Selection
-| Style | Synchronicity | Coupling | Reliability |
-|-------|--------------|----------|-------------|
-| File | Async | Low | High |
-| Database | Sync | High | Medium |
-| RPC | Sync | Medium | Medium |
-| Message | Async | Low | High |
-
-### 5. Cloud Patterns
-
-```mermaid
-graph TB
-    subgraph "Cloud Patterns"
+    subgraph "Azure Pattern Categories"
         direction TB
         
         subgraph "Reliability"
             CB[Circuit Breaker]
-            R[Retry]
-            FO[Failover]
+            R[Retry with Exponential Backoff]
+            FO[Failover Region]
         end
         
         subgraph "Scalability"
             SH[Sharding]
-            CQRS[CQRS]
-            C[Caching]
+            CQRS[CQRS with Cosmos DB]
+            C[Redis Cache]
         end
         
         subgraph "Security"
-            V[Valet Key]
-            G[Gatekeeper]
-            I[Identity]
+            MI[Managed Identity]
+            KV[Key Vault]
+            RBAC[Role-Based Access]
         end
     end
 ```
+
+#### Implementation Checklist
+- [ ] Use Managed Identities instead of connection strings/keys
+- [ ] Implement retry patterns with exponential backoff
+- [ ] Enable monitoring and diagnostics
+- [ ] Configure appropriate RBAC roles
+- [ ] Use Key Vault for secrets
+- [ ] Enable encryption at rest and in transit
+- [ ] Implement proper error handling
+- [ ] Set up proper logging and monitoring
+
+### 3. Azure Architecture Patterns
+
+#### Microservices on Azure
+```mermaid
+graph TB
+    subgraph "Azure Microservices Architecture"
+        APIM[API Management] --> ACA[Container Apps]
+        ACA --> COSMOS[Cosmos DB]
+        ACA --> REDIS[Redis Cache]
+        
+        subgraph "Supporting Services"
+            KV[Key Vault]
+            AI[App Insights]
+            LOG[Log Analytics]
+        end
+    end
+```
+
+#### Event-Driven Architecture on Azure
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant EH as Event Hub
+    participant AF as Azure Function
+    participant SB as Service Bus
+    participant ACA as Container App
+    
+    C->>EH: Send Event
+    EH->>AF: Trigger Function
+    AF->>SB: Process & Queue
+    SB->>ACA: Process Message
+```
+
+## Implementation Best Practices
+
+### 1. Security
+- Use Managed Identities for authentication
+- Implement proper RBAC
+- Store secrets in Key Vault
+- Enable encryption at rest and in transit
+- Implement network security groups
+- Use Private Endpoints where possible
+
+### 2. Scalability
+- Implement auto-scaling
+- Use caching strategically
+- Design for horizontal scaling
+- Implement proper data partitioning
+- Use message queues for decoupling
+
+### 3. Reliability
+- Implement retry patterns
+- Use multiple regions
+- Implement circuit breakers
+- Set up proper monitoring
+- Design for failure
+
+### 4. Cost Optimization
+- Right-size resources
+- Implement auto-scaling
+- Use appropriate pricing tiers
+- Monitor resource usage
+- Implement proper tagging
 
 ## Design Decision Framework
 
@@ -213,6 +213,8 @@ graph TB
 - [ ] Time constraints
 - [ ] Cost implications
 - [ ] Maintenance needs
+- [ ] Security requirements
+- [ ] Compliance needs
 
 ### 2. Trade-off Analysis
 ```mermaid
@@ -226,32 +228,7 @@ graph TB
     end
 ```
 
-### 3. Quality Attributes
-1. **Performance**
-   - Response time
-   - Throughput
-   - Resource usage
-   - Latency
-
-2. **Scalability**
-   - Vertical scaling
-   - Horizontal scaling
-   - Load distribution
-   - Data partitioning
-
-3. **Reliability**
-   - Fault tolerance
-   - Error handling
-   - Data consistency
-   - Recovery
-
-4. **Security**
-   - Authentication
-   - Authorization
-   - Data protection
-   - Audit trails
-
-### 4. Implementation Strategy
+### 3. Implementation Strategy
 
 ```mermaid
 graph TB
@@ -261,12 +238,20 @@ graph TB
         I --> T[Testing]
         T --> M[Monitoring]
         
-        subgraph "Feedback Loop"
-            MI[Metrics]
-            FD[Feedback]
-            AD[Adjustment]
+        subgraph "Azure DevOps Pipeline"
+            PR[PR Validation]
+            CD[Continuous Deployment]
+            SEC[Security Scan]
+            MON[Monitoring]
         end
     end
 ```
 
-Remember: System design should balance immediate needs with long-term maintainability and evolution.
+Remember: 
+- Start with a clear understanding of requirements
+- Choose patterns that solve specific problems
+- Consider trade-offs in your design decisions
+- Plan for future scalability and maintenance
+- Always follow security best practices
+- Monitor and measure system performance
+- Document your design decisions and rationale
