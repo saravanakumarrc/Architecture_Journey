@@ -48,7 +48,7 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 
 ### Basic Understanding Required
 - [ ] Low-level programming concepts
-- [ ] Multiple programming paradigms (OOP, functional, procedural)
+- [ ] [Multiple programming paradigms](src/Programming_Paradigms.md)
 - [ ] [Memory management concepts](src/Memory_Management_Concepts.md)
 - [ ] [Operating system fundamentals](src/Operating_System_Fundamentals.md)
 - [ ] [Network protocols](src/Network_Protocols.md) (HTTP, TCP/IP, WebSockets)
@@ -91,8 +91,8 @@ Below is a comprehensive checklist of skills for software architects. I've organ
 - [ ] [Data warehousing concepts](src/Data_Warehousing_Concepts.md)
 - [ ] [Big data processing frameworks](src/Big_Data_Processing_Frameworks.md)
 - [ ] [SQL optimization techniques](src/SQL_Optimization_Techniques.md)
-- [ ] Time series databases
-- [ ] Graph databases
+- [ ] [Time series databases](src/Time_Series_Databases.md)
+- [ ] [Graph databases](src/Graph_Databases.md)
 
 ## Security & Compliance
 
