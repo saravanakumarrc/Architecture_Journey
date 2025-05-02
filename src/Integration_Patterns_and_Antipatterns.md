@@ -110,41 +110,6 @@ graph LR
     end
 ```
 
-Implementation Example:
-```typescript
-// Message bus with routing and transformation
-class MessageBus {
-    private subscribers: Map<string, Function[]>;
-    private transformers: Map<string, Function>;
-
-    publish(topic: string, message: any): void {
-        const transformer = this.transformers.get(topic);
-        const transformedMessage = transformer ? 
-            transformer(message) : message;
-
-        const topicSubscribers = this.subscribers.get(topic) || [];
-        
-        // Fan-out to all subscribers
-        topicSubscribers.forEach(subscriber => {
-            try {
-                subscriber(transformedMessage);
-            } catch (error) {
-                this.handleError(topic, error);
-            }
-        });
-    }
-
-    subscribe(topic: string, handler: Function): void {
-        const current = this.subscribers.get(topic) || [];
-        this.subscribers.set(topic, [...current, handler]);
-    }
-
-    addTransformer(topic: string, transformer: Function): void {
-        this.transformers.set(topic, transformer);
-    }
-}
-```
-
 ## Common Anti-patterns
 
 ### 1. Direct Database Integration

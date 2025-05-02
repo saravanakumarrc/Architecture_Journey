@@ -88,33 +88,6 @@ graph TB
 3. Data storage and backup
 4. High-performance computing
 
-### Implementation Example
-```typescript
-// IaaS Resource Manager
-class IaaSResourceManager {
-    async provisionInfrastructure(config: InfraConfig): Promise<InfrastructureStack> {
-        const network = await this.setupNetwork(config.networkConfig);
-        const storage = await this.provisionStorage(config.storageConfig);
-        const compute = await this.deployCompute(config.computeConfig);
-
-        return {
-            network,
-            storage,
-            compute,
-            monitoring: await this.setupMonitoring([network, storage, compute])
-        };
-    }
-
-    private async setupNetwork(config: NetworkConfig): Promise<NetworkStack> {
-        return {
-            vnet: await this.createVirtualNetwork(config),
-            subnets: await this.createSubnets(config.subnets),
-            securityGroups: await this.setupSecurityGroups(config.security)
-        };
-    }
-}
-```
-
 ## Platform as a Service (PaaS)
 
 ```mermaid
@@ -143,29 +116,6 @@ graph TB
 2. API backends
 3. IoT applications
 4. Data analytics
-
-### Implementation Example
-```typescript
-// PaaS Application Manager
-class PaaSApplicationManager {
-    async deployApplication(app: Application): Promise<DeploymentResult> {
-        const environment = await this.prepareEnvironment(app.requirements);
-        const dependencies = await this.resolveDependencies(app.dependencies);
-        
-        const deployment = await this.platformClient.deploy({
-            app: app.package,
-            env: environment,
-            config: this.generateConfig(app, environment)
-        });
-
-        return {
-            url: deployment.url,
-            resources: deployment.resources,
-            monitoring: await this.setupMonitoring(deployment)
-        };
-    }
-}
-```
 
 ## Software as a Service (SaaS)
 
@@ -196,26 +146,6 @@ graph TB
 3. HR management
 4. Financial applications
 
-### Implementation Example
-```typescript
-// SaaS Tenant Manager
-class SaaSTenantManager {
-    async provisionTenant(tenant: Tenant): Promise<TenantEnvironment> {
-        const database = await this.setupTenantDatabase(tenant);
-        const storage = await this.allocateStorage(tenant.requirements);
-        
-        const environment = await this.createTenantEnvironment({
-            tenant,
-            database,
-            storage,
-            features: await this.enableFeatures(tenant.subscription)
-        });
-
-        return this.configureTenant(environment);
-    }
-}
-```
-
 ## Function as a Service (FaaS)
 
 ```mermaid
@@ -237,29 +167,6 @@ graph TB
 - Automatic scaling
 - Pay-per-execution
 - Stateless functions
-
-### Implementation Example
-```typescript
-// FaaS Function Manager
-class FaaSFunctionManager {
-    async deployFunction(func: ServerlessFunction): Promise<FunctionEndpoint> {
-        const runtime = await this.setupRuntime(func.runtime);
-        const triggers = await this.configureTriggers(func.triggers);
-        
-        const deployment = await this.functionsPlatform.deploy({
-            code: func.code,
-            config: this.generateConfig(func),
-            bindings: triggers
-        });
-
-        return {
-            url: deployment.url,
-            auth: deployment.auth,
-            monitoring: await this.setupMonitoring(deployment)
-        };
-    }
-}
-```
 
 ## Cloud Deployment Models
 

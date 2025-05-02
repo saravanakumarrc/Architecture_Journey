@@ -91,26 +91,6 @@ graph TD
     D --> G[CA Systems<br/>Traditional RDBMS]
 ```
 
-### Implementation Example
-```java
-// Example of eventual consistency in a distributed cache
-public class DistributedCache {
-    private Map<String, String> localCache;
-    private Queue<CacheUpdate> updateQueue;
-    
-    public void put(String key, String value) {
-        // Update local cache immediately
-        localCache.put(key, value);
-        
-        // Queue update for other nodes
-        updateQueue.offer(new CacheUpdate(key, value));
-        
-        // Asynchronously propagate to other nodes
-        asyncPropagateUpdate(new CacheUpdate(key, value));
-    }
-}
-```
-
 ## 2. Distributed Time and Ordering
 
 ### Clock Synchronization
@@ -128,21 +108,6 @@ sequenceDiagram
     A->>B: Message (A:1, B:0, C:0)
     B->>C: Message (A:1, B:1, C:0)
     C->>A: Message (A:1, B:1, C:1)
-```
-
-### Implementation Example
-```python
-class VectorClock:
-    def __init__(self, node_id, num_nodes):
-        self.clock = [0] * num_nodes
-        self.node_id = node_id
-    
-    def increment(self):
-        self.clock[self.node_id] += 1
-    
-    def update(self, other_clock):
-        for i in range(len(self.clock)):
-            self.clock[i] = max(self.clock[i], other_clock[i])
 ```
 
 ## 3. Consensus Algorithms
@@ -167,37 +132,6 @@ sequenceDiagram
     L->>F1: AppendEntries (Heartbeat)
     L->>F2: AppendEntries (Heartbeat)
 ```
-
-### Implementation Example
-```go
-// Simplified Raft leader election
-type RaftNode struct {
-    currentTerm int
-    votedFor    string
-    state       NodeState // Leader, Follower, Candidate
-    nodeId      string
-}
-
-func (n *RaftNode) startElection() {
-    n.state = Candidate
-    n.currentTerm++
-    n.votedFor = n.nodeId
-    
-    // Send RequestVote RPCs to all other nodes
-    votes := 1 // Vote for self
-    for _, peer := range peers {
-        if requestVote(peer, n.currentTerm) {
-            votes++
-        }
-    }
-    
-    if votes > len(peers)/2 {
-        n.state = Leader
-        // Start sending heartbeats
-    }
-}
-```
-
 ## 4. Replication and Consistency Models
 
 ### Consistency Models
@@ -214,33 +148,6 @@ graph LR
     
     style A fill:#f96,stroke:#333
     style D fill:#9cf,stroke:#333
-```
-
-### Implementation Example
-```typescript
-// Example of multi-master replication with conflict resolution
-class ReplicatedDataStore {
-    private data: Map<string, VersionedValue>;
-    private vectorClock: VectorClock;
-
-    async write(key: string, value: any): Promise<void> {
-        const version = this.vectorClock.increment();
-        const versionedValue = new VersionedValue(value, version);
-        
-        // Local write
-        this.data.set(key, versionedValue);
-        
-        // Replicate to other nodes
-        await this.replicateToNodes(key, versionedValue);
-    }
-
-    async resolveConflict(key: string, values: VersionedValue[]): Promise<VersionedValue> {
-        // Last-write-wins conflict resolution
-        return values.reduce((a, b) => 
-            a.version.isGreaterThan(b.version) ? a : b
-        );
-    }
-}
 ```
 
 ## 5. Distributed Communication Patterns
@@ -309,44 +216,6 @@ graph TD
     
     D --> I[Dynamic Node Changes]
     D --> J[Minimal Redistribution]
-```
-
-### Implementation Example
-```java
-// Consistent hashing implementation
-public class ConsistentHash<T> {
-    private final HashFunction hashFunction;
-    private final int numberOfReplicas;
-    private final SortedMap<Integer, T> circle = new TreeMap<>();
-
-    public ConsistentHash(HashFunction hashFunction, int numberOfReplicas, 
-                         Collection<T> nodes) {
-        this.hashFunction = hashFunction;
-        this.numberOfReplicas = numberOfReplicas;
-
-        for (T node : nodes) {
-            add(node);
-        }
-    }
-
-    public void add(T node) {
-        for (int i = 0; i < numberOfReplicas; i++) {
-            circle.put(hashFunction.hash(node.toString() + i), node);
-        }
-    }
-
-    public T get(Object key) {
-        if (circle.isEmpty()) {
-            return null;
-        }
-        int hash = hashFunction.hash(key);
-        if (!circle.containsKey(hash)) {
-            SortedMap<Integer, T> tailMap = circle.tailMap(hash);
-            hash = tailMap.isEmpty() ? circle.firstKey() : tailMap.firstKey();
-        }
-        return circle.get(hash);
-    }
-}
 ```
 
 ## 7. Distributed Transactions
@@ -469,39 +338,6 @@ graph TD
     style D fill:#9cf,stroke:#333
     style F fill:#9cf,stroke:#333
 ```
-
-### Implementation Example
-```typescript
-// Service discovery using Consul
-class ServiceRegistry {
-    private consul: Consul;
-    
-    async register(service: Service): Promise<void> {
-        await this.consul.agent.service.register({
-            name: service.name,
-            id: service.id,
-            address: service.host,
-            port: service.port,
-            tags: service.tags,
-            check: {
-                http: `http://${service.host}:${service.port}/health`,
-                interval: '10s'
-            }
-        });
-    }
-    
-    async discover(serviceName: string): Promise<Service[]> {
-        const result = await this.consul.catalog.service.nodes(serviceName);
-        return result.map(node => ({
-            id: node.ServiceID,
-            name: node.ServiceName,
-            host: node.ServiceAddress,
-            port: node.ServicePort
-        }));
-    }
-}
-```
-
 ## 10. Distributed Caching
 
 ### Strategies

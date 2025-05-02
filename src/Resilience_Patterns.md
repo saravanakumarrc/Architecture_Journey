@@ -53,8 +53,6 @@ graph TB
     end
 ```
 
-## Implementation Examples
-
 ### 1. Circuit Breaker Pattern
 
 ```typescript
