@@ -103,7 +103,276 @@ class AzureDataLakeStorage implements CloudStorageProvider {
 }
 ```
 
-### 2. Azure Cloud Design Patterns
+3. **Liskov Substitution**
+```typescript
+// Good: Derived classes can be substituted for base class
+interface IStorageProvider {
+    uploadFile(data: Buffer): Promise<string>;
+    downloadFile(id: string): Promise<Buffer>;
+    deleteFile(id: string): Promise<void>;
+}
+
+class AzureBlobStorageProvider implements IStorageProvider {
+    async uploadFile(data: Buffer): Promise<string> {
+        // Azure Blob specific implementation
+        return blobId;
+    }
+    
+    async downloadFile(id: string): Promise<Buffer> {
+        // Azure Blob specific implementation
+        return fileData;
+    }
+    
+    async deleteFile(id: string): Promise<void> {
+        // Azure Blob specific implementation
+    }
+}
+
+class AzureFileShareProvider implements IStorageProvider {
+    async uploadFile(data: Buffer): Promise<string> {
+        // File Share specific implementation
+        return fileId;
+    }
+    
+    async downloadFile(id: string): Promise<Buffer> {
+        // File Share specific implementation
+        return fileData;
+    }
+    
+    async deleteFile(id: string): Promise<void> {
+        // File Share specific implementation
+    }
+}
+
+// Both providers can be used interchangeably
+function backupData(storage: IStorageProvider) {
+    // Works with any storage provider
+}
+```
+
+4. **Interface Segregation**
+```typescript
+// Good: Segregated interfaces for different Azure service functionalities
+interface IAzureQueueOperations {
+    enqueueMessage(message: string): Promise<void>;
+    dequeueMessage(): Promise<string>;
+}
+
+interface IAzureTopicOperations {
+    publishMessage(message: string): Promise<void>;
+    subscribe(handler: (message: string) => void): Promise<void>;
+}
+
+interface IAzureDeadLetterOperations {
+    processDeadLetters(): Promise<void>;
+    moveToDeadLetter(messageId: string): Promise<void>;
+}
+
+// Services implement only what they need
+class AzureServiceBusQueue implements IAzureQueueOperations {
+    async enqueueMessage(message: string): Promise<void> {
+        // Implementation
+    }
+    
+    async dequeueMessage(): Promise<string> {
+        // Implementation
+        return message;
+    }
+}
+
+class AzureServiceBusTopic implements IAzureTopicOperations {
+    async publishMessage(message: string): Promise<void> {
+        // Implementation
+    }
+    
+    async subscribe(handler: (message: string) => void): Promise<void> {
+        // Implementation
+    }
+}
+
+// Bad: Fat interface that forces unnecessary implementations
+interface IMessageBus {
+    enqueueMessage(message: string): Promise<void>;
+    dequeueMessage(): Promise<string>;
+    publishMessage(message: string): Promise<void>;
+    subscribe(handler: (message: string) => void): Promise<void>;
+    processDeadLetters(): Promise<void>;
+    moveToDeadLetter(messageId: string): Promise<void>;
+}
+```
+
+5. **Dependency Inversion**
+```typescript
+// Good: High-level modules depend on abstractions
+interface ILogger {
+    log(message: string, level: string): Promise<void>;
+}
+
+interface IMetricsCollector {
+    trackMetric(name: string, value: number): Promise<void>;
+}
+
+class AzureAppInsightsLogger implements ILogger {
+    async log(message: string, level: string): Promise<void> {
+        // Application Insights specific logging
+    }
+}
+
+class AzureMonitorMetrics implements IMetricsCollector {
+    async trackMetric(name: string, value: number): Promise<void> {
+        // Azure Monitor specific metrics
+    }
+}
+
+// High-level module depends on abstractions
+class OrderProcessor {
+    constructor(
+        private logger: ILogger,
+        private metrics: IMetricsCollector
+    ) {}
+
+    async processOrder(order: Order): Promise<void> {
+        await this.logger.log(`Processing order ${order.id}`, 'info');
+        // Process order
+        await this.metrics.trackMetric('orders_processed', 1);
+    }
+}
+
+// Configuration/DI setup
+const logger = new AzureAppInsightsLogger();
+const metrics = new AzureMonitorMetrics();
+const processor = new OrderProcessor(logger, metrics);
+
+// Bad: High-level module depends on concrete classes
+class TightlyCoupledOrderProcessor {
+    private logger = new AzureAppInsightsLogger();
+    private metrics = new AzureMonitorMetrics();
+
+    async processOrder(order: Order): Promise<void> {
+        // Tightly coupled to specific implementations
+    }
+}
+```
+
+### 2. GRASP Principles
+
+```mermaid
+mindmap
+    root((GRASP))
+        (Information Expert)
+            [Assign responsibility to class with most information]
+            [Data and behavior together]
+        (Creator)
+            [Who creates objects]
+            [Object lifecycle management]
+        (Controller)
+            [Handle system events]
+            [Coordinate and control]
+        (Low Coupling)
+            [Minimize dependencies]
+            [Increase reusability]
+        (High Cohesion)
+            [Related functionality together]
+            [Focused responsibilities]
+        (Polymorphism)
+            [Handle variations]
+            [Type-based behavior]
+        (Pure Fabrication)
+            [Service classes]
+            [Behavior grouping]
+        (Indirection)
+            [Avoid direct coupling]
+            [Intermediate objects]
+        (Protected Variations)
+            [Interface stability]
+            [Encapsulate changes]
+
+#### Azure Implementation Examples
+
+1. **Information Expert & Creator**
+```typescript
+// Good: Storage account manager has the information needed to manage blobs
+class AzureStorageAccountManager {
+    constructor(private storageAccount: BlobServiceClient) {
+        // Information Expert: Has all storage account details
+    }
+
+    // Creator: Creates container clients as it has the necessary information
+    async createContainer(containerName: string): Promise<ContainerClient> {
+        const containerClient = this.storageAccount.getContainerClient(containerName);
+        await containerClient.create();
+        return containerClient;
+    }
+}
+```
+
+2. **Controller & Low Coupling**
+```typescript
+// Controller pattern in Azure Function
+class OrderProcessingController {
+    constructor(
+        private orderService: OrderService,
+        private storageService: AzureStorageService,
+        private notificationService: NotificationService
+    ) {}
+
+    // Controller coordinates the flow but delegates actual work
+    async processOrder(order: Order): Promise<void> {
+        await this.orderService.validateOrder(order);
+        await this.storageService.saveOrder(order);
+        await this.notificationService.notifyCustomer(order);
+    }
+}
+```
+
+3. **High Cohesion & Protected Variations**
+```typescript
+// High Cohesion: Interface focuses on a single aspect
+interface MessageQueueClient {
+    sendMessage(message: any): Promise<void>;
+    receiveMessage(): Promise<any>;
+}
+
+// Protected Variations: Different implementations behind same interface
+class ServiceBusQueueClient implements MessageQueueClient {
+    // Implementation for Azure Service Bus
+}
+
+class EventHubClient implements MessageQueueClient {
+    // Implementation for Azure Event Hub
+}
+```
+
+4. **Polymorphism & Indirection**
+```typescript
+// Polymorphism with Azure Storage options
+interface CloudStorage {
+    store(data: Buffer): Promise<string>;
+    retrieve(id: string): Promise<Buffer>;
+}
+
+class AzureBlobStorage implements CloudStorage {
+    async store(data: Buffer): Promise<string> {
+        // Blob storage specific implementation
+    }
+    
+    async retrieve(id: string): Promise<Buffer> {
+        // Blob storage specific implementation
+    }
+}
+
+class AzureFileShare implements CloudStorage {
+    async store(data: Buffer): Promise<string> {
+        // File share specific implementation
+    }
+    
+    async retrieve(id: string): Promise<Buffer> {
+        // File share specific implementation
+    }
+}
+```
+
+### 3. Azure Cloud Design Patterns
 
 ```mermaid
 graph TB
