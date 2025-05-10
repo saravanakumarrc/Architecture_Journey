@@ -1,4 +1,6 @@
-# Azure Policy and Role-Based Access Control (RBAC)
+# Azure Policy and RBAC
+
+Azure Policy and Role-Based Access Control (RBAC) are essential governance tools that help you manage access to resources and enforce organizational standards. Azure Policy enables you to create, assign, and manage policies to control resource properties, while RBAC helps you manage who has access to Azure resources, what they can do with those resources, and what areas they have access to.
 
 ## Overview
 Azure Policy and RBAC are fundamental components of Azure's governance and security framework. Azure Policy enforces organizational standards and compliance, while RBAC manages access rights to Azure resources.

@@ -1,4 +1,6 @@
-# Azure Storage Security and Data Protection
+# Azure Storage Security
+
+Azure Storage Security provides comprehensive protection for your data at rest and in transit. It includes features like encryption, access control, network security, and key management to ensure your storage resources remain secure and compliant. From shared access signatures to Microsoft Entra integration, these security capabilities help safeguard your data across all storage services.
 
 ## Overview
 Azure Storage Security encompasses multiple layers of protection including encryption, access control, network security, and data protection features to ensure the confidentiality, integrity, and availability of data stored in Azure Storage services.

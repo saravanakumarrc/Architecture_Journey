@@ -1,4 +1,6 @@
-# Azure DNS and Network Routing
+# Azure DNS and Routing
+
+Azure DNS and Routing services provide robust domain hosting and traffic management capabilities in the cloud. Azure DNS hosts your domain names on Azure's global network of name servers, offering high availability, security, and seamless integration with other Azure services. Azure's routing capabilities, including Traffic Manager and Front Door, enable you to optimize application performance and reliability through intelligent traffic distribution.
 
 ## Overview
 Azure DNS provides reliable and secure domain hosting while Azure network routing enables control over network traffic flow. Together, they form the backbone of Azure networking infrastructure.

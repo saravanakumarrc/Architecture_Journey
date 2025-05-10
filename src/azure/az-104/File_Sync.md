@@ -1,5 +1,7 @@
 # Azure File Sync
 
+Azure File Sync extends your on-premises file servers with cloud benefits while maintaining local access performance and compatibility. It enables centralized file share management in Azure while caching frequently accessed files on-premises, providing a hybrid solution that combines the best of cloud storage with local file server performance.
+
 ## Overview
 Azure File Sync is a service that centralizes your file shares in Azure Files while keeping the flexibility, performance, and compatibility of a Windows file server. It transforms Windows Server into a quick cache of your Azure file share.
 

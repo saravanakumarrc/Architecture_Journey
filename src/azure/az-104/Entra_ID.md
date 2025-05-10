@@ -1,4 +1,6 @@
-# Microsoft Entra ID (formerly Azure Active Directory)
+# Microsoft Entra ID (formerly Azure AD)
+
+Microsoft Entra ID is Microsoft's cloud-based identity and access management service. It's the backbone of Azure's security model, providing enterprise-grade identity management with features like single sign-on, multi-factor authentication, and conditional access. Entra ID helps organizations manage user identities, control access to resources, and protect against security threats in today's hybrid and cloud environments.
 
 ## Overview
 Microsoft Entra ID is a cloud-based identity and access management service that serves as the cornerstone of security for Microsoft cloud services and custom applications. It provides enterprise-grade identity management for applications, devices, and users, all from a centralized location.

@@ -1,3 +1,7 @@
+# Azure Monitor
+
+Azure Monitor is the comprehensive monitoring solution for collecting, analyzing, and responding to telemetry from your cloud and on-premises environments. It helps you understand how your applications are performing and proactively identifies issues affecting them. With features like Application Insights, Container Insights, and VM Insights, Azure Monitor provides deep observability across your entire Azure environment.
+
 # Azure Monitor and Log Analytics
 
 ## Overview

@@ -1,4 +1,6 @@
-# Azure Active Directory (Microsoft Entra ID)
+# Azure Identity and Access Management
+
+Azure Identity and Access Management (IAM) provides comprehensive identity and access control solutions for your cloud resources. It enables you to manage user identities, implement multi-factor authentication, control resource access through role-based access control (RBAC), and maintain security compliance. Through integration with Azure Active Directory, it offers enterprise-grade identity management with features like conditional access and privileged identity management.
 
 ## Overview
 Microsoft Entra ID (formerly Azure AD) is Microsoft's cloud-based identity and access management service. It helps your employees sign in and access resources in both external and internal resources.

@@ -1,5 +1,7 @@
 # Azure Storage Accounts
 
+Azure Storage Accounts provide scalable and secure cloud storage for modern applications. They offer various storage services including Blob Storage for unstructured data, File Storage for managed file shares, Queue Storage for messaging, and Table Storage for NoSQL data. With features like data redundancy, encryption, and fine-grained access control, Storage Accounts form the foundation for Azure's data storage solutions.
+
 ## Overview
 Azure Storage Account is a fundamental storage solution in Azure that contains all your Azure Storage data objects: blobs, files, queues, and tables. The storage account provides a unique namespace for your Azure Storage data that is accessible from anywhere in the world over HTTP or HTTPS.
 

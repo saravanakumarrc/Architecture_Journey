@@ -1,4 +1,6 @@
-# Azure Virtual Networks (VNets)
+# Azure Virtual Networks (VNet)
+
+Azure Virtual Networks (VNets) provide the fundamental building block for your private network in Azure. VNet enables many types of Azure resources to securely communicate with each other, the internet, and on-premises networks. Like a traditional network in your datacenter, VNet facilitates essential networking capabilities while adding Azure's scalability, availability, and security benefits.
 
 ## Overview
 Azure Virtual Networks (VNets) are the fundamental building block for private networks in Azure. VNets enable Azure resources to securely communicate with each other, the internet, and on-premises networks.

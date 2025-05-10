@@ -1,3 +1,7 @@
+# Azure Hybrid Connectivity
+
+Azure Hybrid Connectivity solutions enable seamless integration between on-premises environments and Azure cloud services. Whether through Site-to-Site VPN, ExpressRoute, or Azure Virtual WAN, these connectivity options provide secure and reliable communication channels. This hybrid architecture allows organizations to extend their datacenter capabilities while maintaining existing investments and meeting regulatory requirements.
+
 # Azure VPN Gateway and ExpressRoute
 
 ## Overview

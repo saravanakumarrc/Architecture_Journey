@@ -1,5 +1,7 @@
 # Azure Load Balancer and Traffic Manager
 
+Azure Load Balancer and Traffic Manager are essential services for distributing traffic and ensuring high availability. Load Balancer operates at the network/transport layer (Layer 4) to distribute incoming traffic among multiple resources, while Traffic Manager provides DNS-based global routing to direct users to the closest or most appropriate endpoint worldwide. Together, they help achieve optimal performance, reliability, and scalability for your applications.
+
 ## Overview
 Azure provides multiple services for load balancing and traffic routing: Azure Load Balancer for network/application load balancing, and Traffic Manager for DNS-based global traffic routing.
 
@@ -322,6 +324,78 @@ graph LR
    - Use RBAC
    - Enable logging
    - Regular security reviews
+
+## Network Monitoring Tools
+
+### Network Watcher
+```mermaid
+graph TB
+    A[Network Watcher] --> B[Connection Monitor]
+    A --> C[NSG Flow Logs]
+    A --> D[Packet Capture]
+    A --> E[IP Flow Verify]
+    
+    B --> B1[End-to-end monitoring]
+    B --> B2[Latency analysis]
+    
+    C --> C1[Traffic Analytics]
+    C --> C2[Security Analysis]
+    
+    D --> D1[Troubleshooting]
+    D --> D2[Security Analysis]
+    
+    E --> E1[Connectivity Check]
+    E --> E2[Rule Evaluation]
+```
+
+#### Key Features
+1. **Connection Monitor**
+   - Real-time monitoring of network connectivity
+   - Latency measurement and historical trends
+   - Multi-region connectivity checks
+
+2. **NSG Flow Logs**
+   - Detailed network traffic analysis
+   - Security compliance monitoring
+   - Capacity planning insights
+
+3. **Packet Capture**
+   - Network traffic inspection
+   - Performance troubleshooting
+   - Security investigation
+
+### Data Collector Set
+```mermaid
+graph LR
+    A[Data Collector Set] --> B[Performance Counters]
+    A --> C[Event Trace Data]
+    A --> D[System Configuration]
+    
+    B --> B1[Network metrics]
+    B --> B2[System resources]
+    
+    C --> C1[System events]
+    C --> C2[Application logs]
+    
+    D --> D1[Hardware info]
+    D --> D2[System settings]
+```
+
+#### Implementation Best Practices
+1. **Performance Monitoring**
+   - Configure relevant performance counters
+   - Set appropriate collection intervals
+   - Define data retention policies
+
+2. **Resource Tracking**
+   - Monitor network interface metrics
+   - Track system resource utilization
+   - Analyze bottlenecks
+
+3. **Integration with Azure Monitor**
+   - Forward collected data to Azure Monitor
+   - Create custom dashboards
+   - Set up alerts based on thresholds
 
 ## Further Reading
 - [Azure Load Balancer Documentation](https://learn.microsoft.com/en-us/azure/load-balancer/)

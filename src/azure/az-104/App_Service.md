@@ -1,5 +1,7 @@
 # Azure App Service
 
+Azure App Service is a fully managed platform for building, deploying, and scaling web applications and APIs. It supports multiple programming languages and frameworks while handling infrastructure management, allowing developers to focus on their code. With features like auto-scaling, continuous deployment, and built-in authentication, App Service provides enterprise-grade hosting for your applications.
+
 ## Overview
 Azure App Service is a fully managed platform for building, deploying, and scaling web apps. It supports multiple programming languages and frameworks, with built-in infrastructure maintenance, security patching, and scaling.
 

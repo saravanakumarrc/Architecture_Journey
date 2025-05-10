@@ -1,4 +1,6 @@
-# Azure Hybrid Networking: VPN Gateway and ExpressRoute
+# Azure Hybrid Networking
+
+Azure Hybrid Networking enables seamless connectivity between on-premises networks and Azure cloud services through multiple networking solutions. Whether using Azure Virtual WAN for branch connectivity, ExpressRoute for private connections, or VPN Gateway for secure tunnels, hybrid networking ensures reliable and secure communication between your on-premises and cloud resources.
 
 ## Overview
 Azure Hybrid Networking solutions enable organizations to connect their on-premises networks with Azure through secure and reliable connections using VPN Gateway and ExpressRoute services.

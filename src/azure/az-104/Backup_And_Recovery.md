@@ -1,4 +1,6 @@
-# Azure Backup and Site Recovery
+# Azure Backup and Recovery
+
+Azure Backup and Recovery services provide comprehensive data protection and business continuity solutions for your cloud and on-premises workloads. With Azure Backup for data protection and Azure Site Recovery for disaster recovery, these services help ensure your applications and data remain available during planned and unplanned outages. Features like policy-based backup management, cross-region recovery, and automated replication enable robust protection of your critical assets.
 
 ## Overview
 Azure Backup and Azure Site Recovery (ASR) are Azure's built-in disaster recovery services. Azure Backup provides data protection and recovery capabilities, while ASR ensures business continuity through replication and failover.

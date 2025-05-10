@@ -1,3 +1,9 @@
+# Azure Active Directory (Azure AD)
+
+Note: Azure Active Directory has been rebranded as Microsoft Entra ID. This documentation is maintained for historical context and certification exam preparation. For current implementation details, please refer to the Microsoft Entra ID documentation.
+
+Azure Active Directory (Azure AD) is Microsoft's enterprise identity and access management solution delivered as a cloud service. It provides robust identity management, application access control, and security capabilities for both cloud and on-premises resources. This foundational service enables organizations to manage and secure identities while maintaining compliance and governance.
+
 # Microsoft Entra ID (formerly Azure Active Directory)
 
 ## Overview

@@ -1,4 +1,6 @@
-# Azure Cost Management and FinOps
+# Azure Cost Management and Billing
+
+Azure Cost Management and Billing provides tools and capabilities to monitor, analyze, and optimize your cloud spending. It helps you understand your Azure bill, manage your account and subscriptions, monitor and control cloud spending, and optimize resource use through detailed cost analysis, budgets, alerts, and recommendations for cost savings.
 
 ## Overview
 Azure Cost Management and FinOps practices help organizations plan, analyze, and optimize their cloud spending while maintaining operational excellence. This involves understanding costs, implementing governance, and optimizing resource usage.
