@@ -1,6 +1,6 @@
 # Azure Traffic Manager
 
-Azure Traffic Manager is a DNS-based traffic load balancer that enables you to distribute traffic optimally to services across global Azure regions while providing high availability and responsiveness. Operating at the DNS level, Traffic Manager offers various routing methods to distribute traffic across multiple deployments of your application.
+Azure Traffic Manager is a DNS-based traffic load balancer that enables you to distribute traffic optimally to services across global Azure regions while providing high availability and responsiveness. As a DNS-based service, Traffic Manager directs the client to the appropriate service endpoint based on the chosen routing method.
 
 ## Overview
 
@@ -28,63 +28,66 @@ graph TB
     E --> E3[Path]
 ```
 
-## Routing Methods
+## Routing Methods in Detail
 
 ### 1. Performance Routing
 ```mermaid
 graph TB
-    A[User Request] --> B[Traffic Manager]
+    A[Client Request] --> B[Traffic Manager DNS]
     B --> C[Latency Table]
     C --> D[Region Selection]
     
-    D --> E[Region 1]
-    D --> F[Region 2]
-    D --> G[Region 3]
+    D --> E[Closest Region]
+    D --> F[Lowest Latency]
+    D --> G[Best Performance]
     
-    E --> H[Lowest Latency]
+    E --> H[Endpoint Response]
+    F --> H
+    G --> H
 ```
 
 ### 2. Geographic Routing
 ```mermaid
-graph LR
-    A[User Location] --> B[Traffic Manager]
-    B --> C[Region Mapping]
+graph TB
+    A[User Location] --> B[DNS Query]
+    B --> C[Geographic Mapping]
     
     C --> D[North America]
     C --> E[Europe]
-    C --> F[Asia]
+    C --> F[Asia Pacific]
+    C --> G[Custom Regions]
     
-    D --> G[US East]
-    E --> H[West Europe]
-    F --> I[Southeast Asia]
+    D --> H[US East]
+    D --> I[US West]
+    E --> J[West Europe]
+    E --> K[North Europe]
+    F --> L[East Asia]
+    F --> M[Southeast Asia]
 ```
 
 ### 3. Priority Routing
 ```mermaid
-graph TB
-    A[User Request] --> B[Primary Region]
-    B -->|Failure| C[Secondary Region]
-    C -->|Failure| D[Tertiary Region]
-    
-    B --> E[Priority 1]
-    C --> F[Priority 2]
-    D --> G[Priority 3]
+graph LR
+    A[Client] --> B[Primary Region]
+    B -->|Healthy| C[Primary Endpoint]
+    B -->|Unhealthy| D[Secondary Region]
+    D -->|Healthy| E[Secondary Endpoint]
+    D -->|Unhealthy| F[Tertiary Region]
 ```
 
 ### 4. Weighted Routing
 ```mermaid
-graph LR
-    A[Traffic] --> B[Distribution]
-    B --> C[40% Weight]
-    B --> D[35% Weight]
-    B --> E[25% Weight]
+graph TB
+    A[Traffic Distribution] --> B[40% Weight]
+    A --> C[35% Weight]
+    A --> D[25% Weight]
     
-    C --> F[Endpoint 1]
-    D --> G[Endpoint 2]
-    E --> H[Endpoint 3]
+    B --> E[Region 1]
+    C --> F[Region 2]
+    D --> G[Region 3]
 ```
 
-## High Availability Design
+## Advanced Configuration
 
 ### 1. Nested Profiles
 ```mermaid
@@ -93,166 +96,149 @@ graph TB
     A --> C[Child Profile 2]
     A --> D[Child Profile 3]
     
-    B --> E[Region 1 Endpoints]
-    C --> F[Region 2 Endpoints]
-    D --> G[Region 3 Endpoints]
+    B --> E[Performance Method]
+    C --> F[Geographic Method]
+    D --> G[Weighted Method]
+    
+    E --> H[Endpoints]
+    F --> I[Endpoints]
+    G --> J[Endpoints]
 ```
 
-### 2. Health Checks
+### 2. Endpoint Monitoring
 ```mermaid
 graph LR
-    A[Health Monitoring] --> B[Protocol Check]
-    A --> C[Interval]
-    A --> D[Timeout]
+    A[Monitoring] --> B[HTTP/HTTPS]
+    A --> C[TCP]
+    A --> D[Custom Headers]
     
-    B --> E[HTTP/HTTPS]
-    B --> F[TCP]
-    
-    C --> G[30 sec default]
-    D --> H[10 sec default]
+    B --> E[Status Code]
+    C --> F[Port Check]
+    D --> G[Response Match]
 ```
 
-## Metrics and Monitoring
+## Real-World Scenarios
 
+### 1. Global Application Delivery
 ```mermaid
 graph TB
-    A[Monitoring] --> B[Endpoint Status]
-    A --> C[Query Stats]
-    A --> D[Probe Status]
-    
-    B --> B1[Online]
-    B --> B2[Degraded]
-    B --> B3[Offline]
-    
-    C --> C1[Query Volume]
-    C --> C2[Response]
-    
-    D --> D1[Success]
-    D --> D2[Failure]
-```
-
-## Common Use Cases
-
-### 1. Global Load Balancing
-```mermaid
-graph TB
-    subgraph "Global Distribution"
-        A[Traffic Manager]
-        B[Region 1]
-        C[Region 2]
-        D[Region 3]
+    subgraph "Traffic Manager"
+        A[DNS Resolution]
+        B[Health Checks]
+        C[Routing Rules]
     end
     
-    A --> B
-    A --> C
-    A --> D
+    subgraph "Region 1"
+        D[App Service]
+        E[VM Scale Set]
+    end
     
-    B --> E[App Service]
-    C --> F[VM Scale Set]
-    D --> G[Container Apps]
+    subgraph "Region 2"
+        F[App Service]
+        G[VM Scale Set]
+    end
+    
+    A --> D
+    A --> F
+    B --> D
+    B --> F
+    C --> D
+    C --> F
 ```
 
 ### 2. Disaster Recovery
 ```mermaid
-graph LR
-    A[Primary Site] --> B[Traffic Manager]
-    C[DR Site] --> B
+graph TB
+    A[Traffic Manager] --> B[Primary Site]
+    A --> C[DR Site]
     
-    B --> D[Active Site]
-    B --> E[Failover Site]
+    B --> D[Active Region]
+    B --> E[Health Monitoring]
+    
+    C --> F[Standby Region]
+    C --> G[Failover Ready]
+    
+    E -->|Failure| F
 ```
 
-## Best Practices
+## Monitoring and Analytics
 
-1. **Configuration Guidelines**
-   - Set appropriate TTL values
-   - Configure proper health checks
-   - Use nested profiles for complex scenarios
-   - Implement proper monitoring
-
-2. **Performance Optimization**
+### 1. Health Status Dashboard
 ```mermaid
 graph TB
-    A[Optimization] --> B[DNS TTL]
-    A --> C[Endpoint Selection]
-    A --> D[Health Probes]
+    A[Monitoring] --> B[Endpoint Status]
+    A --> C[DNS Queries]
+    A --> D[Probe Results]
     
-    B --> E[Cache Duration]
-    C --> F[Region Strategy]
-    D --> G[Monitoring Interval]
+    B --> E[Online/Offline]
+    B --> F[Degraded]
+    
+    C --> G[Query Volume]
+    C --> H[Response Time]
+    
+    D --> I[Success Rate]
+    D --> J[Latency]
 ```
 
-3. **Cost Management**
-   - Monitor endpoint distribution
-   - Optimize routing methods
-   - Regular performance review
-   - Clean up unused profiles
-
-## Security Considerations
-
+### 2. Performance Metrics
 ```mermaid
 graph LR
-    A[Security] --> B[Access Control]
-    A --> C[Monitoring]
-    A --> D[Auditing]
+    A[Metrics] --> B[DNS Resolution]
+    A --> C[Endpoint Health]
+    A --> D[Traffic Flow]
     
-    B --> E[RBAC]
-    B --> F[Endpoint Access]
-    
-    C --> G[Alerts]
-    C --> H[Logs]
-    
-    D --> I[Activity Logs]
-    D --> J[Change Tracking]
+    B --> E[Time]
+    C --> F[Status]
+    D --> G[Distribution]
 ```
 
 ## Integration Patterns
 
-### 1. Multi-Region Applications
+### 1. Multi-Region Deployment
 ```mermaid
 graph TB
     A[Traffic Manager] --> B[Azure Front Door]
     A --> C[Application Gateway]
     A --> D[Load Balancer]
     
-    B --> E[CDN Integration]
-    C --> F[WAF Protection]
-    D --> G[Regional Distribution]
+    B --> E[Global HTTP/S]
+    C --> F[Regional WAF]
+    D --> G[VM Distribution]
 ```
 
-### 2. Hybrid Deployments
+### 2. Hybrid Connectivity
 ```mermaid
 graph LR
-    A[Traffic Manager] --> B[Azure Services]
-    A --> C[On-premises]
-    A --> D[Other Clouds]
+    A[Traffic Manager] --> B[Azure Endpoints]
+    A --> C[External Endpoints]
+    A --> D[Nested Endpoints]
     
-    B --> E[Azure Endpoints]
-    C --> F[External Endpoints]
-    D --> G[Custom Endpoints]
+    B --> E[Azure Services]
+    C --> F[On-premises]
+    D --> G[Other Regions]
 ```
 
-## Troubleshooting Guide
+## Best Practices
 
-1. **Common Issues**
-   - DNS resolution problems
-   - Health probe failures
-   - Endpoint availability
-   - Performance degradation
+1. **Configuration Guidelines**
+   - Set appropriate TTL values
+   - Configure meaningful health probes
+   - Implement proper monitoring
+   - Plan for failover scenarios
 
-2. **Resolution Steps**
+2. **Performance Optimization**
 ```mermaid
 graph TB
-    A[Issue] --> B[Check DNS]
-    A --> C[Verify Endpoints]
-    A --> D[Review Logs]
+    A[Optimization] --> B[DNS TTL]
+    A --> C[Probe Settings]
+    A --> D[Endpoint Selection]
     
-    B --> E[DNS Tools]
-    C --> F[Health Status]
-    D --> G[Diagnostics]
+    B --> E[Cache Duration]
+    C --> F[Intervals]
+    D --> G[Region Strategy]
 ```
 
 ## Further Reading
-- [Traffic Manager Documentation](https://learn.microsoft.com/en-us/azure/traffic-manager/)
-- [Performance Routing Guide](https://learn.microsoft.com/en-us/azure/traffic-manager/traffic-manager-routing-methods)
-- [Monitoring Best Practices](https://learn.microsoft.com/en-us/azure/traffic-manager/traffic-manager-monitoring)
+- [Traffic Manager Overview](https://learn.microsoft.com/en-us/azure/traffic-manager/traffic-manager-overview)
+- [Routing Methods Guide](https://learn.microsoft.com/en-us/azure/traffic-manager/traffic-manager-routing-methods)
+- [Endpoint Monitoring](https://learn.microsoft.com/en-us/azure/traffic-manager/traffic-manager-monitoring)

@@ -166,135 +166,47 @@ graph LR
 2. **Resolution Steps**
 ```mermaid
 graph TB
-```mermaid
-graph TB
-    A[Monitoring] --> B[Sync Health]
-    A --> C[Server Health]
-    A --> D[Metrics]
+    A[Issue] --> B[Check Logs]
+    A --> C[Verify Status]
+    A --> D[Test Network]
     
-    B --> E[Sync Status]
-    B --> F[Last Sync]
+    B --> E[Event Logs]
+    B --> F[Telemetry]
     
-    C --> G[Agent Status]
-    C --> H[Connectivity]
+    C --> G[Sync]
+    C --> H[Agent]
     
-    D --> I[Performance]
-    D --> J[Capacity]
-```
-
-### 2. Sync Monitoring
-```mermaid
-graph LR
-    A[Sync Monitoring] --> B[Files Synced]
-    A --> C[Bytes Synced]
-    A --> D[Errors]
-    
-    B --> E[Count]
-    C --> F[Volume]
-    D --> G[Resolution]
-```
-
-## Best Practices
-
-### 1. Performance Optimization
-```mermaid
-graph TB
-    A[Optimization] --> B[Network]
-    A --> C[Storage]
-    A --> D[Server]
-    
-    B --> E[Bandwidth]
-    B --> F[Latency]
-    
-    C --> G[Capacity]
-    C --> H[IOPS]
-    
-    D --> I[Resources]
-    D --> J[Cache Size]
-```
-
-### 2. Configuration Guidelines
-```mermaid
-graph LR
-    A[Guidelines] --> B[Agent Setup]
-    A --> C[Sync Groups]
-    A --> D[Endpoints]
-    
-    B --> E[Prerequisites]
-    C --> F[Topology]
-    D --> G[Paths]
-```
-
-## Troubleshooting Guide
-
-### 1. Common Issues
-```mermaid
-graph TB
-    A[Issues] --> B[Sync]
-    A --> C[Cloud Tiering]
-    A --> D[Connectivity]
-    
-    B --> E[Conflicts]
-    B --> F[Performance]
-    
-    C --> G[Space Issues]
-    C --> H[Recall Problems]
-    
-    D --> I[Network]
-    D --> J[Firewall]
-```
-
-### 2. Resolution Steps
-```mermaid
-graph LR
-    A[Resolution] --> B[Diagnostics]
-    A --> C[Logs]
-    A --> D[Support]
-    
-    B --> E[Tools]
-    C --> F[Analysis]
-    D --> G[Tickets]
+    D --> I[Connectivity]
+    D --> J[Bandwidth]
 ```
 
 ## Integration Features
 
+### 1. Backup Integration
 ```mermaid
 graph TB
-    A[Integrations] --> B[Azure Backup]
-    A --> C[Azure Monitor]
-    A --> D[Azure Security]
+    A[Backup] --> B[Azure Backup]
+    A --> C[VSS]
+    A --> D[DPM]
     
-    B --> E[Protection]
-    B --> F[Recovery]
-    
-    C --> G[Insights]
-    C --> H[Alerts]
-    
-    D --> I[Encryption]
-    D --> J[Access Control]
+    B --> E[Cloud Backup]
+    C --> F[Local Backup]
+    D --> G[Enterprise Backup]
 ```
 
-## Best Practices Summary
-
-1. **Initial Setup**
-   - Properly size cache volumes
-   - Configure network settings
-   - Test sync patterns
-   - Document configuration
-
-2. **Operational Management**
-   - Monitor sync health
-   - Manage cloud tiering
-   - Regular backups
-   - Performance tuning
-
-3. **Security Guidelines**
-   - Use encryption
-   - Implement access control
-   - Regular security reviews
-   - Network security
+### 2. High Availability
+```mermaid
+graph LR
+    A[HA Design] --> B[Multiple Servers]
+    A --> C[DFS-N]
+    A --> D[Load Balancing]
+    
+    B --> E[Sync]
+    C --> F[Namespace]
+    D --> G[Traffic]
+```
 
 ## Further Reading
 - [Azure File Sync Documentation](https://learn.microsoft.com/en-us/azure/storage/file-sync/)
-- [Planning Guide](https://learn.microsoft.com/en-us/azure/storage/file-sync/file-sync-planning)
-- [Troubleshooting Guide](https://learn.microsoft.com/en-us/azure/storage/file-sync/file-sync-troubleshoot)
+- [Implementation Guide](https://learn.microsoft.com/en-us/azure/storage/file-sync/file-sync-deployment-guide)
+- [Best Practices](https://learn.microsoft.com/en-us/azure/storage/files/storage-sync-files-planning)
