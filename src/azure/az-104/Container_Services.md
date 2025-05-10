@@ -1,6 +1,6 @@
 # Azure Container Services
 
-Azure Container Services provide a comprehensive suite of container solutions, including Azure Kubernetes Service (AKS), Container Instances, and Container Registry. These services enable you to deploy, manage, and scale containerized applications with enterprise-grade security and reliability. From single containers to complex microservices architectures, Azure's container ecosystem supports diverse containerization needs.
+Azure Container Services provide a comprehensive suite of offerings for containerized applications, from Azure Kubernetes Service (AKS) for orchestration to Container Instances for serverless containers and Container Registry for image management. These services enable organizations to build, deploy, and scale containerized applications with enterprise-grade security and reliability, supporting modern application development practices and microservices architectures.
 
 ## Overview
 Azure provides two main container services: Azure Container Instances (ACI) for simple container workloads and Azure Kubernetes Service (AKS) for orchestrating complex container applications.

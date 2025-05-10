@@ -1,3 +1,7 @@
+# Azure Cost Management
+
+Azure Cost Management provides comprehensive tools and capabilities for monitoring, allocating, and optimizing your cloud spending. Through detailed cost analysis, budgets, alerts, and recommendations, it helps organizations understand their Azure bill, control cloud costs, and maximize their cloud investment. With features like cost allocation, budget automation, and reserved instance management, it enables effective financial governance of your Azure resources.
+
 # Azure Cost Management and Billing
 
 Azure Cost Management and Billing provides tools and capabilities to monitor, analyze, and optimize your cloud spending. It helps you understand your Azure bill, manage your account and subscriptions, monitor and control cloud spending, and optimize resource use through detailed cost analysis, budgets, alerts, and recommendations for cost savings.
