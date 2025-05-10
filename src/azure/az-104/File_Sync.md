@@ -5,99 +5,34 @@ Azure File Sync extends your on-premises file servers with cloud benefits while 
 ## Overview
 Azure File Sync is a service that centralizes your file shares in Azure Files while keeping the flexibility, performance, and compatibility of a Windows file server. It transforms Windows Server into a quick cache of your Azure file share.
 
-## Core Components
+## File Sync Architecture
 
+### 1. Core Components
 ```mermaid
 graph TB
-    A[Azure File Sync] --> B[Storage Sync Service]
-    A --> C[Sync Group]
-    A --> D[Cloud Endpoint]
-    A --> E[Server Endpoint]
+    A[File Sync] --> B[Storage Sync Service]
+    A --> C[Azure File Share]
+    A --> D[File Sync Agent]
     
-    B --> B1[Resource Group]
-    B --> B2[Region]
+    B --> B1[Sync Groups]
+    B --> B2[Cloud Endpoints]
     
-    C --> C1[Sync Topology]
-    C --> C2[Sync Direction]
+    C --> C1[Storage Account]
+    C --> C2[File Share]
     
-    D --> D1[Azure File Share]
-    D --> D2[Storage Account]
-    
-    E --> E1[Windows Server]
-    E --> E2[Local Cache]
+    D --> D1[Windows Server]
+    D --> D2[Server Endpoints]
 ```
 
-## Architecture Components
-
-### 1. Sync Infrastructure
-```mermaid
-graph TB
-    subgraph "Azure"
-        A[Storage Sync Service]
-        B[Azure File Share]
-        C[Storage Account]
-    end
-    
-    subgraph "On-Premises"
-        D[Windows Server]
-        E[File Server]
-        F[Local Cache]
-    end
-    
-    A --> B
-    B --> C
-    A --> D
-    D --> E
-    E --> F
-```
-
-### 2. Sync Groups
+### 2. Sync Topology
 ```mermaid
 graph LR
-    A[Sync Group] --> B[Cloud Endpoint]
-    A --> C[Server Endpoint]
+    A[Windows Server] -->|Sync| B[Storage Sync Service]
+    B -->|Sync| C[Azure File Share]
+    B -->|Sync| D[Other Servers]
     
-    B --> D[File Share]
-    C --> E[Server Path]
-    
-    D --> F[Master Copy]
-    E --> G[Local Cache]
-```
-
-## Implementation Examples
-
-### 1. Initial Setup
-```mermaid
-sequenceDiagram
-    participant Admin
-    participant Server
-    participant Azure
-    
-    Admin->>Server: Install Agent
-    Server->>Azure: Register Server
-    Admin->>Azure: Create Sync Group
-    Azure->>Server: Configure Endpoints
-    Server->>Azure: Initial Sync
-```
-
-### 2. Multi-Site Sync
-```mermaid
-graph TB
-    subgraph "Primary Site"
-        A[File Server 1]
-        B[Local Cache 1]
-    end
-    
-    subgraph "Secondary Site"
-        C[File Server 2]
-        D[Local Cache 2]
-    end
-    
-    E[Azure File Share] --> A
-    E --> C
-    
-    A --> B
-    C --> D
+    A --> E[Local Cache]
+    D --> F[Local Cache]
 ```
 
 ## Cloud Tiering
@@ -131,41 +66,106 @@ graph LR
     D --> G[Free Space]
 ```
 
-## Sync Patterns
+## Best Practices
 
-### 1. Hub and Spoke
+1. **Initial Setup**
+   - Properly size cache volumes
+   - Configure network settings
+   - Test sync patterns
+   - Document configuration
+
+2. **Performance Optimization**
 ```mermaid
 graph TB
-    subgraph "Azure (Hub)"
-        A[Azure File Share]
-    end
+    A[Optimization] --> B[Network]
+    A --> C[Storage]
+    A --> D[Cache]
     
-    subgraph "Branch Offices (Spokes)"
-        B[Server 1]
-        C[Server 2]
-        D[Server 3]
-    end
+    B --> E[Bandwidth]
+    B --> F[Latency]
     
-    A --> B
-    A --> C
-    A --> D
+    C --> G[Capacity]
+    C --> H[IOPS]
+    
+    D --> I[Size]
+    D --> J[Policy]
 ```
 
-### 2. Data Protection
+## Security Configuration
+
+### 1. Access Control
+```mermaid
+graph TB
+    A[Security] --> B[Authentication]
+    A --> C[Authorization]
+    A --> D[Encryption]
+    
+    B --> B1[AD Integration]
+    B --> B2[Storage Auth]
+    
+    C --> C1[RBAC]
+    C --> C2[Share Permissions]
+    
+    D --> D1[In Transit]
+    D --> D2[At Rest]
+```
+
+### 2. Network Security
 ```mermaid
 graph LR
-    A[Protection] --> B[Backup]
-    A --> C[Snapshots]
-    A --> D[Replication]
+    A[Network] --> B[Endpoints]
+    A --> C[Firewall]
+    A --> D[Proxy]
     
-    B --> E[Azure Backup]
-    C --> F[Point-in-time]
-    D --> G[Geo-redundancy]
+    B --> E[Private]
+    B --> F[Public]
+    
+    C --> G[Rules]
+    D --> H[Settings]
 ```
 
 ## Monitoring and Management
 
 ### 1. Health Monitoring
+```mermaid
+graph TB
+    A[Monitoring] --> B[Sync Health]
+    A --> C[Server Health]
+    A --> D[Cloud Health]
+    
+    B --> E[Status]
+    B --> F[Progress]
+    
+    C --> G[Agent]
+    C --> H[Resources]
+    
+    D --> I[Share]
+    D --> J[Service]
+```
+
+### 2. Reporting
+```mermaid
+graph LR
+    A[Reports] --> B[Sync]
+    A --> C[Tiering]
+    A --> D[Errors]
+    
+    B --> E[Statistics]
+    C --> F[Capacity]
+    D --> G[Logs]
+```
+
+## Troubleshooting Guide
+
+1. **Common Issues**
+   - Sync conflicts
+   - Connectivity problems
+   - Tiering issues
+   - Performance bottlenecks
+
+2. **Resolution Steps**
+```mermaid
+graph TB
 ```mermaid
 graph TB
     A[Monitoring] --> B[Sync Health]
