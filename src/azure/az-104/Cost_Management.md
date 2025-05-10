@@ -1,102 +1,104 @@
-# Azure Cost Management and Billing
+# Azure Cost Management and FinOps
 
 ## Overview
-Azure Cost Management and Billing provides tools to monitor, allocate, and optimize your Azure spending. It helps organizations plan, analyze, and reduce their cloud costs while maximizing their cloud investment.
+Azure Cost Management and FinOps practices help organizations plan, analyze, and optimize their cloud spending while maintaining operational excellence. This involves understanding costs, implementing governance, and optimizing resource usage.
 
 ## Core Components
 
 ```mermaid
 graph TB
-    A[Cost Management] --> B[Cost Analysis]
-    A --> C[Budgets]
-    A --> D[Alerts]
-    A --> E[Reports]
+    A[Cost Management] --> B[Budgets]
+    A --> C[Cost Analysis]
+    A --> D[Optimization]
+    A --> E[Governance]
     
-    B --> B1[Actual Costs]
-    B --> B2[Forecasted Costs]
-    B --> B3[Cost Allocation]
+    B --> B1[Planning]
+    B --> B2[Tracking]
+    B --> B3[Alerts]
     
-    C --> C1[Budget Types]
-    C --> C2[Thresholds]
-    C --> C3[Scope]
+    C --> C1[Reports]
+    C --> C2[Analytics]
+    C --> C3[Forecasting]
     
-    D --> D1[Budget Alerts]
-    D --> D2[Credit Alerts]
-    D --> D3[Department Alerts]
+    D --> D1[Recommendations]
+    D --> D2[Right-sizing]
+    D --> D3[Reserved Instances]
     
-    E --> E1[Scheduled]
-    E --> E2[On-demand]
-    E --> E3[Exports]
+    E --> E1[Policies]
+    E --> E2[RBAC]
+    E --> E3[Tags]
 ```
 
-## Cost Analysis Features
+## Cost Analysis
 
 ### 1. Cost Views
 ```mermaid
 graph TB
-    subgraph "Cost Analysis"
-        A[Views]
-        B[Filters]
-        C[Grouping]
+    subgraph "Analysis Views"
+        A[Daily Costs]
+        B[Resource Costs]
+        C[Service Costs]
     end
     
-    A --> D[Accumulated]
-    A --> E[Daily]
-    A --> F[Monthly]
+    subgraph "Dimensions"
+        D[Resource Groups]
+        E[Services]
+        F[Locations]
+    end
     
-    B --> G[Resource]
-    B --> H[Location]
-    B --> I[Tag]
-    
-    C --> J[Resource Group]
-    C --> K[Service]
-    C --> L[Location]
+    A --> G[Trends]
+    B --> H[Usage]
+    C --> I[Breakdown]
 ```
 
-### 2. Cost Allocation
+### 2. Cost Reporting
 ```mermaid
 graph LR
-    A[Cost Allocation] --> B[Departments]
-    A --> C[Projects]
-    A --> D[Applications]
+    A[Reports] --> B[Scheduled]
+    A --> C[Custom]
+    A --> D[Exports]
     
-    B --> E[Business Units]
-    C --> F[Initiatives]
-    D --> G[Services]
+    B --> E[Daily]
+    B --> F[Monthly]
+    
+    C --> G[Filters]
+    C --> H[Views]
+    
+    D --> I[CSV]
+    D --> J[API]
 ```
 
-## Budget Management
+## Budgets and Alerts
 
-### 1. Budget Creation
+### 1. Budget Configuration
 ```mermaid
 sequenceDiagram
     participant Admin
     participant Budget
-    participant Alerts
+    participant Alert
+    participant Action
     
-    Admin->>Budget: Set Amount
-    Admin->>Budget: Define Scope
-    Budget->>Alerts: Configure Thresholds
-    Alerts->>Admin: Notify Stakeholders
+    Admin->>Budget: Create Budget
+    Admin->>Budget: Set Thresholds
+    Budget->>Alert: Trigger Alert
+    Alert->>Action: Execute Action
 ```
 
-### 2. Budget Monitoring
+### 2. Alert Types
 ```mermaid
 graph TB
-    subgraph "Budget Controls"
-        A[Thresholds]
-        B[Notifications]
-        C[Actions]
-    end
+    A[Alerts] --> B[Budget]
+    A --> C[Forecast]
+    A --> D[Credit]
     
-    A --> D[Warning]
-    A --> E[Critical]
+    B --> E[Threshold %]
+    B --> F[Actual]
     
-    B --> F[Email]
-    B --> G[Webhook]
+    C --> G[Trends]
+    C --> H[Predictions]
     
-    C --> H[Alerts]
-    C --> I[Reports]
+    D --> I[Balance]
+    D --> J[Expiry]
 ```
 
 ## Cost Optimization
@@ -105,179 +107,187 @@ graph TB
 ```mermaid
 graph TB
     A[Optimization] --> B[Right-sizing]
-    A --> C[Reserved Instances]
-    A --> D[Spot Instances]
+    A --> C[Schedule]
+    A --> D[Reserved]
     
-    B --> E[VM Sizing]
-    B --> F[Storage Tiers]
+    B --> E[VM Sizes]
+    B --> F[Performance]
     
-    C --> G[Commitments]
-    C --> H[Flexibility]
+    C --> G[Start/Stop]
+    C --> H[Scale]
     
-    D --> I[Cost Savings]
-    D --> J[Availability]
+    D --> I[Instances]
+    D --> J[Capacity]
 ```
 
-### 2. Cost Reduction Strategies
+### 2. Reserved Instances
 ```mermaid
 graph LR
-    A[Cost Reduction] --> B[Automation]
-    A --> C[Scheduling]
-    A --> D[Architecture]
+    A[Reserved] --> B[Term]
+    A --> C[Scope]
+    A --> D[Flexibility]
     
-    B --> E[Start/Stop]
-    C --> F[Off-hours]
-    D --> G[Design]
+    B --> E[1 Year]
+    B --> F[3 Years]
+    
+    C --> G[Single]
+    C --> H[Shared]
+    
+    D --> I[Size]
+    D --> J[Family]
 ```
 
-## Reporting and Analysis
+## Cost Governance
 
-### 1. Report Types
+### 1. Policy Implementation
+```mermaid
+graph TB
+    A[Governance] --> B[Policies]
+    A --> C[Controls]
+    A --> D[Compliance]
+    
+    B --> E[Resource]
+    B --> F[Tag]
+    B --> G[Location]
+    
+    C --> H[Limits]
+    C --> I[Restrictions]
+    
+    D --> J[Audit]
+    D --> K[Reports]
+```
+
+### 2. Tagging Strategy
+```mermaid
+graph LR
+    A[Tags] --> B[Business]
+    A --> C[Technical]
+    A --> D[Security]
+    
+    B --> E[Cost Center]
+    B --> F[Project]
+    
+    C --> G[Environment]
+    C --> H[Application]
+    
+    D --> I[Compliance]
+    D --> J[Confidentiality]
+```
+
+## Reporting and Analytics
+
+### 1. Cost Reports
 ```mermaid
 graph TB
     A[Reports] --> B[Usage]
-    A --> C[Cost]
-    A --> D[Recommendations]
+    A --> C[Reservation]
+    A --> D[Price Sheet]
     
-    B --> E[Resource Usage]
-    B --> F[Service Usage]
+    B --> E[Resources]
+    B --> F[Services]
     
-    C --> G[Actual Costs]
-    C --> H[Forecasted]
+    C --> G[Utilization]
+    C --> H[Charges]
     
-    D --> I[Savings]
-    D --> J[Optimization]
+    D --> I[Pricing]
+    D --> J[Terms]
 ```
 
-### 2. Data Analysis
+### 2. Performance Analytics
 ```mermaid
 graph LR
-    A[Analysis] --> B[Trends]
+    A[Analytics] --> B[Trends]
     A --> C[Patterns]
     A --> D[Anomalies]
     
     B --> E[Historical]
     C --> F[Usage]
-    D --> G[Spikes]
+    D --> G[Detection]
 ```
 
-## Best Practices
+## FinOps Practices
 
-### 1. Cost Governance
+### 1. Financial Planning
 ```mermaid
 graph TB
-    A[Governance] --> B[Policies]
-    A --> C[Standards]
-    A --> D[Controls]
+    A[Planning] --> B[Forecasting]
+    A --> C[Budgeting]
+    A --> D[Allocation]
     
-    B --> E[Usage]
-    B --> F[Access]
+    B --> E[Models]
+    B --> F[Scenarios]
     
-    C --> G[Naming]
-    C --> H[Tagging]
+    C --> G[Limits]
+    C --> H[Controls]
     
-    D --> I[Limits]
-    D --> J[Approvals]
+    D --> I[Teams]
+    D --> J[Projects]
 ```
 
-### 2. Resource Organization
+### 2. Operational Excellence
 ```mermaid
 graph LR
-    A[Organization] --> B[Hierarchy]
-    A --> C[Tagging]
-    A --> D[Groups]
+    A[Operations] --> B[Monitoring]
+    A --> C[Optimization]
+    A --> D[Reporting]
     
-    B --> E[Management]
-    C --> F[Allocation]
-    D --> G[Access]
-```
-
-## Monitoring and Alerts
-
-### 1. Cost Monitoring
-```mermaid
-graph TB
-    A[Monitoring] --> B[Usage]
-    A --> C[Spending]
-    A --> D[Trends]
-    
-    B --> E[Resources]
-    B --> F[Services]
-    
-    C --> G[Current]
-    C --> H[Forecast]
-    
-    D --> I[Analysis]
-    D --> J[Patterns]
-```
-
-### 2. Alert Configuration
-```mermaid
-graph LR
-    A[Alerts] --> B[Thresholds]
-    A --> C[Recipients]
-    A --> D[Actions]
-    
-    B --> E[Budget]
-    C --> F[Stakeholders]
-    D --> G[Response]
-```
-
-## Integration Features
-
-```mermaid
-graph TB
-    A[Integrations] --> B[Power BI]
-    A --> C[Azure Monitor]
-    A --> D[APIs]
-    
-    B --> E[Reports]
-    B --> F[Dashboards]
-    
-    C --> G[Metrics]
-    C --> H[Logs]
-    
-    D --> I[Automation]
-    D --> J[Custom Tools]
-```
-
-## Cost Management Workflow
-
-```mermaid
-sequenceDiagram
-    participant Plan
-    participant Monitor
-    participant Optimize
-    participant Control
-    
-    Plan->>Monitor: Set Budgets
-    Monitor->>Optimize: Analyze Usage
-    Optimize->>Control: Implement Changes
-    Control->>Plan: Review & Adjust
-    Note over Plan,Control: Continuous Cycle
+    B --> E[Real-time]
+    C --> F[Continuous]
+    D --> G[Regular]
 ```
 
 ## Best Practices Summary
 
-1. **Budget Management**
-   - Set realistic budgets
+1. **Cost Planning**
+   - Set detailed budgets
    - Configure alerts
-   - Regular reviews
-   - Document policies
+   - Regular monitoring
+   - Use forecasting
 
-2. **Cost Optimization**
-   - Use reserved instances
-   - Implement auto-shutdown
+2. **Resource Optimization**
    - Right-size resources
-   - Regular cleanup
+   - Use reserved instances
+   - Implement auto-scaling
+   - Schedule resources
 
 3. **Governance**
-   - Implement tagging
-   - Set up access control
-   - Define policies
-   - Regular auditing
+   - Implement policies
+   - Use tagging
+   - Regular reviews
+   - Track compliance
+
+## Implementation Guidelines
+
+### 1. Cost Strategy
+```mermaid
+graph TB
+    A[Strategy] --> B[Planning]
+    A --> C[Control]
+    A --> D[Review]
+    
+    B --> E[Budget]
+    B --> F[Forecast]
+    
+    C --> G[Policies]
+    C --> H[Limits]
+    
+    D --> I[Analysis]
+    D --> J[Adjustment]
+```
+
+### 2. Optimization Process
+```mermaid
+graph LR
+    A[Process] --> B[Monitor]
+    A --> C[Analyze]
+    A --> D[Optimize]
+    
+    B --> E[Usage]
+    C --> F[Patterns]
+    D --> G[Actions]
+```
 
 ## Further Reading
 - [Azure Cost Management Documentation](https://learn.microsoft.com/en-us/azure/cost-management-billing/)
-- [Cost Optimization Guide](https://learn.microsoft.com/en-us/azure/cost-management-billing/costs/cost-mgt-best-practices)
-- [Billing Best Practices](https://learn.microsoft.com/en-us/azure/cost-management-billing/manage/getting-started)
+- [FinOps in Azure](https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/finops/)
+- [Cost Optimization Best Practices](https://learn.microsoft.com/en-us/azure/architecture/framework/cost/overview)
