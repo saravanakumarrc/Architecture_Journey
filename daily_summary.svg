@@ -1,0 +1,51 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="600" fill="#f8fafc"/>
+  
+  <!-- Header -->
+  <rect x="0" y="0" width="800" height="80" fill="#3B82F6"/>
+  <text x="40" y="35" fill="white" font-family="Arial, sans-serif" font-size="24" font-weight="bold">Daily AI & Cloud Snapshot</text>
+  <text x="40" y="60" fill="white" font-family="Arial, sans-serif" font-size="14">📡 January 15, 2025</text>
+  
+  <!-- Main Content Card -->
+  <rect x="40" y="100" width="720" height="420" fill="white" stroke="#e2e8f0" stroke-width="2" rx="12"/>
+  
+  <!-- Title -->
+  <text x="70" y="140" fill="#1e293b" font-family="Arial, sans-serif" font-size="20" font-weight="bold">OpenAI's ChatGPT Gets Memory Feature</text>
+  
+  <!-- Description -->
+  <text x="70" y="170" fill="#475569" font-family="Arial, sans-serif" font-size="14">ChatGPT can now remember details from your conversations across different chats.</text>
+  <text x="70" y="190" fill="#475569" font-family="Arial, sans-serif" font-size="14">This means it won't forget your preferences, work style, or personal details.</text>
+  
+  <!-- Quick Facts Header -->
+  <text x="70" y="230" fill="#10B981" font-family="Arial, sans-serif" font-size="16" font-weight="bold">🔍 Quick Facts</text>
+  
+  <!-- Fact 1 -->
+  <circle cx="85" cy="255" r="3" fill="#3B82F6"/>
+  <text x="100" y="260" fill="#1e293b" font-family="Arial, sans-serif" font-size="14" font-weight="bold">What:</text>
+  <text x="145" y="260" fill="#475569" font-family="Arial, sans-serif" font-size="14">AI assistant that remembers past conversations</text>
+  
+  <!-- Fact 2 -->
+  <circle cx="85" cy="280" r="3" fill="#3B82F6"/>
+  <text x="100" y="285" fill="#1e293b" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Why it matters:</text>
+  <text x="200" y="285" fill="#475569" font-family="Arial, sans-serif" font-size="14">Makes AI interactions more personal and efficient</text>
+  
+  <!-- Fact 3 -->
+  <circle cx="85" cy="305" r="3" fill="#3B82F6"/>
+  <text x="100" y="310" fill="#1e293b" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Cool factor:</text>
+  <text x="180" y="310" fill="#475569" font-family="Arial, sans-serif" font-size="14">Remembers your coffee preference for months</text>
+  
+  <!-- Takeaway Header -->
+  <text x="70" y="350" fill="#F59E0B" font-family="Arial, sans-serif" font-size="16" font-weight="bold">💡 One-Minute Takeaway</text>
+  
+  <!-- Takeaway Text -->
+  <text x="70" y="375" fill="#475569" font-family="Arial, sans-serif" font-size="14">Think of it like having a personal assistant who actually remembers what you told them</text>
+  <text x="70" y="395" fill="#475569" font-family="Arial, sans-serif" font-size="14">last week. Instead of repeating yourself every time, ChatGPT will know you're a teacher</text>
+  <text x="70" y="415" fill="#475569" font-family="Arial, sans-serif" font-size="14">who needs simple explanations or a developer who prefers code examples.</text>
+  
+  <!-- Footer -->
+  <rect x="40" y="540" width="720" height="40" fill="#f1f5f9" rx="8"/>
+  <text x="70" y="555" fill="#64748b" font-family="Arial, sans-serif" font-size="12">📊 98 words</text>
+  <text x="170" y="555" fill="#64748b" font-family="Arial, sans-serif" font-size="12">⏱️ 1 minute read</text>
+  <text x="620" y="555" fill="#64748b" font-family="Arial, sans-serif" font-size="12">🤖 Daily AI Snapshot</text>
+</svg>
