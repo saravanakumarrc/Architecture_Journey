@@ -286,7 +286,7 @@ mindmap
         (Protected Variations)
             [Interface stability]
             [Encapsulate changes]
-
+```
 #### Azure Implementation Examples
 
 1. **Information Expert & Creator**
